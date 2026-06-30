@@ -9,8 +9,3 @@ export default defineConfig({
         }),
     ],
 });
-
-app 
-└── Http
-└── Models
-└── Providers
