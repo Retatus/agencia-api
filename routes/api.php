@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\PaisController;
 
-Route::get('/status', function () {
-    return ['api' => 'ok'];
+Route::group([], function () {
+    Route::apiResource('paises', PaisController::class);
 });
