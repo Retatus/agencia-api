@@ -53,7 +53,6 @@ class CurrencyController extends Controller
 
     public function update(UpdateCurrencyRequest $request, Currency $currency): CurrencyResource 
     {
-
         $currency->update($request->validated());
 
         return new CurrencyResource($currency);
