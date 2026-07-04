@@ -11,6 +11,10 @@ use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\Catalog\ServiceVariantController;
 use App\Http\Controllers\Catalog\ProviderController;
 
+use App\Http\Controllers\Pricing\PriceController;
+use App\Http\Controllers\Pricing\PriceListController;
+use App\Http\Controllers\Pricing\PriceTypeController;
+
 // php artisan serve --port=8001
 
 Route::group([], function () {
@@ -23,6 +27,12 @@ Route::group([], function () {
     Route::apiResource('services', ServiceController::class);
     Route::apiResource('service-variants', ServiceVariantController::class);
     Route::apiResource('providers', ProviderController::class);
+
+    Route::prefix('pricing')->group(function () {
+        Route::apiResource('price-lists', PriceListController::class);
+        Route::apiResource('prices', PriceController::class);
+        Route::apiResource('price-types', PriceTypeController::class);
+    });
 });
 
 
