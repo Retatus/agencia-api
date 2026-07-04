@@ -6,6 +6,9 @@ use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\PassengerTypeController;
 use App\Http\Controllers\Api\DocumentTypeController;
 
+use App\Http\Controllers\Catalog\ServiceCategoryController;
+use App\Http\Controllers\Catalog\ProviderController;
+
 // php artisan serve --port=8001
 
 Route::group([], function () {
@@ -13,6 +16,9 @@ Route::group([], function () {
     Route::apiResource('currencies', CurrencyController::class);
     Route::apiResource('passenger-types', PassengerTypeController::class);
     Route::apiResource('document-types', DocumentTypeController::class);
+
+    Route::apiResource('service-categories', ServiceCategoryController::class);
+    Route::apiResource('providers', ProviderController::class);
 });
 
 
