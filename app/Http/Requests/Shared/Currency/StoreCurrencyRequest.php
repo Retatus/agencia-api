@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Currency;
+namespace App\Http\Requests\Shared\Currency;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -80,7 +80,4 @@ class StoreCurrencyRequest extends FormRequest
             'active.boolean' => 'El valor de active debe ser booleano.',
         ];
     }
-
-
-
 }

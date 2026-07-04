@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Currency\StoreCurrencyRequest;
 use App\Http\Requests\Currency\UpdateCurrencyRequest;
-use App\Http\Resources\CurrencyResource;
+use App\Http\Resources\Shared\CurrencyResource;
 use App\Models\Currency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

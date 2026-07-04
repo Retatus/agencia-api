@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\DocumentType;
+namespace App\Http\Requests\Shared\PassengerType;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDocumentTypeRequest extends FormRequest
+class StorePassengerTypeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,9 +22,10 @@ class StoreDocumentTypeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string|size:10|unique:document_types',
+            'code' => 'required|string|max:3|unique:passenger_types',
             'name' => 'required|string|max:50',
-            'active' => 'nullable|boolean'
+            'description' => 'nullable|string|max:255',
+            'active' => 'boolean',
         ];
     }
 
@@ -33,11 +34,13 @@ class StoreDocumentTypeRequest extends FormRequest
         return [
             'code.required' => 'El código es obligatorio.',
             'code.string' => 'El código debe ser una cadena de texto.',
-            'code.size' => 'El código debe tener exactamente 10 caracteres.',
-            'code.unique' => 'Ya existe un tipo de documento con este código.',
+            'code.max' => 'El código no debe exceder los 3 caracteres.',
+            'code.unique' => 'Ya existe un tipo de pasajero con este código.',
             'name.required' => 'El nombre es obligatorio.',
             'name.string' => 'El nombre debe ser una cadena de texto.',
             'name.max' => 'El nombre no debe exceder los 50 caracteres.',
+            'description.string' => 'La descripción debe ser una cadena de texto.',
+            'description.max' => 'La descripción no debe exceder los 255 caracteres.',
             'active.boolean' => 'El campo activo debe ser verdadero o falso.',
         ];
     }

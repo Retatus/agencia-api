@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\PassengerType;
+namespace App\Http\Requests\Shared\PassengerType;
 
 use Illuminate\Foundation\Http\FormRequest;
 

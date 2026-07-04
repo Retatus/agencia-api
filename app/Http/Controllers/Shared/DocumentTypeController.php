@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DocumentType\StoreDocumentTypeRequest;
 use App\Http\Requests\DocumentType\UpdateDocumentTypeRequest;
-use App\Http\Resources\DocumentTypeResource;
+use App\Http\Resources\Shared\DocumentTypeResource;
 use App\Models\DocumentType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
