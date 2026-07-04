@@ -58,7 +58,7 @@ class Price extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | Scopes
+    | Query Scopes
     |--------------------------------------------------------------------------
     */
 
@@ -90,5 +90,41 @@ class Price extends Model
             'price_type_id',
             $priceTypeId
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+
+    public function getServiceNameAttribute(): ?string
+    {
+        return $this->serviceVariant?->service?->name;
+    }
+
+    public function getVariantNameAttribute(): ?string
+    {
+        return $this->serviceVariant?->name;
+    }
+
+    public function getProviderNameAttribute(): ?string
+    {
+        return $this->serviceVariant?->service?->provider?->name;
+    }
+
+    public function getPriceListNameAttribute(): ?string
+    {
+        return $this->priceList?->name;
+    }
+
+    public function getPassengerTypeNameAttribute(): ?string
+    {
+        return $this->passengerType?->name;
+    }
+
+    public function getPriceTypeNameAttribute(): ?string
+    {
+        return $this->priceType?->name;
     }
 }
