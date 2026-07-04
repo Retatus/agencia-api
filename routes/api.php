@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PassengerTypeController;
 use App\Http\Controllers\Api\DocumentTypeController;
 
 use App\Http\Controllers\Catalog\ServiceCategoryController;
+use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\Catalog\ProviderController;
 
 // php artisan serve --port=8001
@@ -18,6 +19,7 @@ Route::group([], function () {
     Route::apiResource('document-types', DocumentTypeController::class);
 
     Route::apiResource('service-categories', ServiceCategoryController::class);
+    Route::apiResource('services', ServiceController::class);
     Route::apiResource('providers', ProviderController::class);
 });
 
@@ -35,6 +37,7 @@ Route::group([], function () {
   * agregar las propiedades del modelo, id, name, code, description, active
   * modificar los metodos del contoller, index, store, show, update, destroy
   * agregar los request, StorePassengerTypeRequest, UpdatePassengerTypeRequest (authorize = true, rules, messages)
+  * Para un request de actualizacion en el path validar con sometimes y no con required, para que no sea obligatorio enviar todos los campos
   * agregar el resource, PassengerTypeResource
   * agregar las rutas en api.php
   */

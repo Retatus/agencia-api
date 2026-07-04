@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Requests\Catalog\ServiceCategory;
+namespace App\Http\Requests\Catalog\Service;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreServiceCategoryRequest extends FormRequest
+class UpdateServiceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,8 +22,11 @@ class StoreServiceCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string|max:10|unique:service_categories',
-            'name' => 'required|string|max:100',
+            'code' => 'sometimes|string|max:10|unique:services,code,' . $this->route('service')->id,
+            'provider_id' => 'sometimes|exists:providers,id',
+            'service_categories_id' => 'sometimes|exists:service_categories,id',
+            'name' => 'sometimes|string|max:100',
+            'description' => 'nullable|string|max:255',
             'active' => 'boolean',
         ];
     }
@@ -31,13 +34,15 @@ class StoreServiceCategoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.required' => 'El código es obligatorio.',
             'code.string' => 'El código debe ser una cadena de texto.',
             'code.max' => 'El código no debe exceder los 10 caracteres.',
-            'code.unique' => 'Ya existe una categoría de servicio con este código.',
-            'name.required' => 'El nombre es obligatorio.',
+            'code.unique' => 'Ya existe un servicio con este código.',
+            'provider_id.exists' => 'El proveedor seleccionado no existe.',
+            'service_categories_id.exists' => 'La categoría de servicio seleccionada no existe.',
             'name.string' => 'El nombre debe ser una cadena de texto.',
             'name.max' => 'El nombre no debe exceder los 100 caracteres.',
+            'description.string' => 'La descripción debe ser una cadena de texto.',
+            'description.max' => 'La descripción no debe exceder los 255 caracteres.',
             'active.boolean' => 'El campo activo debe ser verdadero o falso.',
         ];
     }
