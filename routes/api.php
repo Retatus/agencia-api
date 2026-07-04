@@ -2,12 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PaisController;
-use App\Http\Controllers\Api\CurrencyController;
-use App\Http\Controllers\Api\PassengerTypeController;
-use App\Http\Controllers\Api\DocumentTypeController;
+use App\Http\Controllers\Shared\CurrencyController;
+use App\Http\Controllers\Shared\PassengerTypeController;
+use App\Http\Controllers\Shared\DocumentTypeController;
 
 use App\Http\Controllers\Catalog\ServiceCategoryController;
 use App\Http\Controllers\Catalog\ServiceController;
+use App\Http\Controllers\Catalog\ServiceVariantController;
 use App\Http\Controllers\Catalog\ProviderController;
 
 // php artisan serve --port=8001
@@ -20,6 +21,7 @@ Route::group([], function () {
 
     Route::apiResource('service-categories', ServiceCategoryController::class);
     Route::apiResource('services', ServiceController::class);
+    Route::apiResource('service-variants', ServiceVariantController::class);
     Route::apiResource('providers', ProviderController::class);
 });
 
