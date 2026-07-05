@@ -28,6 +28,11 @@ class PriceList extends Model
         'valid_to' => 'date',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | Relationships

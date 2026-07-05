@@ -34,6 +34,12 @@ class Provider extends Model
         'active' => 'boolean',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | RELATIONSHIPS

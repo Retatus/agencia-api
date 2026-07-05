@@ -21,6 +21,11 @@ class Currency extends Model
         'active' => 'boolean',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

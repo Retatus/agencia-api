@@ -33,6 +33,11 @@ class ServiceVariant extends Model
         'active'           => 'boolean',
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | Relationships

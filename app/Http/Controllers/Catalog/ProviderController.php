@@ -46,7 +46,6 @@ class ProviderController extends Controller
 
     public function update(UpdateProviderRequest $request, Provider $provider): ProviderResource 
     {
-
         $provider->update(
             $request->validated()
         );
@@ -58,7 +57,6 @@ class ProviderController extends Controller
     
     public function destroy(Provider $provider): JsonResponse 
     {
-
         if ($provider->services()->exists()) {
 
             return response()->json([
@@ -74,6 +72,5 @@ class ProviderController extends Controller
             'success' => true,
             'message' => 'Proveedor eliminado correctamente.'
         ]);
-
     }
 }

@@ -27,10 +27,7 @@ class PriceController extends Controller
     /**
      * Listado de precios.
      */
-    public function index(
-        Request $request,
-        PriceFilter $filter
-    )
+    public function index(Request $request, PriceFilter $filter)
     {
         $prices = $filter
             ->apply(
@@ -46,10 +43,8 @@ class PriceController extends Controller
     /**
      * Crear precio.
      */
-    public function store(
-        StorePriceRequest $request
-    ): PriceResource {
-
+    public function store(StorePriceRequest $request): PriceResource 
+    {
         $price = Price::create(
             $request->validated()
         );
@@ -62,10 +57,8 @@ class PriceController extends Controller
     /**
      * Mostrar un precio.
      */
-    public function show(
-        Price $price
-    ): PriceResource {
-
+    public function show(Price $price): PriceResource 
+    {
         $price->load($this->relations);
 
         return new PriceResource($price);
@@ -74,11 +67,8 @@ class PriceController extends Controller
     /**
      * Actualizar un precio.
      */
-    public function update(
-        UpdatePriceRequest $request,
-        Price $price
-    ): PriceResource {
-
+    public function update(UpdatePriceRequest $request, Price $price): PriceResource 
+    {
         $price->update(
             $request->validated()
         );
@@ -91,10 +81,8 @@ class PriceController extends Controller
     /**
      * Eliminar un precio.
      */
-    public function destroy(
-        Price $price
-    ): JsonResponse {
-
+    public function destroy(Price $price): JsonResponse 
+    {
         $price->delete();
 
         return response()->json([

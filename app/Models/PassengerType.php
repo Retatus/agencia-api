@@ -16,4 +16,9 @@ class PassengerType extends Model
     protected $casts = [
         'active' => 'boolean',
     ];
+
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+    ];
 }
