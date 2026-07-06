@@ -15,6 +15,8 @@ use App\Http\Controllers\Pricing\PriceController;
 use App\Http\Controllers\Pricing\PriceListController;
 use App\Http\Controllers\Pricing\PriceTypeController;
 
+use App\Http\Controllers\CRM\CustomerController;
+
 // php artisan serve --port=8001
 
 Route::group([], function () {
@@ -32,6 +34,10 @@ Route::group([], function () {
         Route::apiResource('price-lists', PriceListController::class);
         Route::apiResource('prices', PriceController::class);
         Route::apiResource('price-types', PriceTypeController::class);
+    });
+
+    Route::prefix('crm')->group(function () {
+        Route::apiResource('customers', CustomerController::class);
     });
 });
 
