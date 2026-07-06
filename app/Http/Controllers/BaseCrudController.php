@@ -108,16 +108,16 @@ abstract class BaseCrudController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function store(Request $request)
-    {
-        $model = ($this->model)::create(
-            $request->validated()
-        );
+    // public function store(Request $request)
+    // {
+    //     $model = ($this->model)::create(
+    //         $request->validated()
+    //     );
 
-        $model->load($this->with);
+    //     $model->load($this->with);
 
-        return new $this->resource($model);
-    }
+    //     return new $this->resource($model);
+    // }
 
     /*
     |--------------------------------------------------------------------------
@@ -125,16 +125,16 @@ abstract class BaseCrudController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function update(Request $request, Model $model)
-    {
-        $model->update(
-            $request->validated()
-        );
+    // public function update(Request $request, Model $model)
+    // {
+    //     $model->update(
+    //         $request->validated()
+    //     );
 
-        $model->load($this->with);
+    //     $model->load($this->with);
 
-        return new $this->resource($model);
-    }
+    //     return new $this->resource($model);
+    // }
 
     /*
     |--------------------------------------------------------------------------

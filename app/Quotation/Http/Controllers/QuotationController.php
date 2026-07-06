@@ -9,8 +9,14 @@ use App\Quotation\Filters\QuotationFilter;
 
 use App\Quotation\Http\Resources\QuotationResource;
 
-use App\Quotation\Http\Requests\Quotation\UpdateQuotationRequest;
 use App\Quotation\Http\Requests\Quotation\StoreQuotationRequest;
+use App\Quotation\Http\Requests\Quotation\UpdateQuotationRequest;
+
+use App\Quotation\Actions\CreateQuotationAction;
+use App\Quotation\Actions\UpdateQuotationAction;
+
+use Illuminate\Http\JsonResponse;
+
 
 class QuotationController extends BaseCrudController
 {
@@ -36,4 +42,41 @@ class QuotationController extends BaseCrudController
         'items.serviceVariant.service.provider',
         'items.price.priceType',
     ];
+
+    public function __construct(
+        protected CreateQuotationAction $createQuotationAction,
+        protected UpdateQuotationAction $updateQuotationAction
+    ) {
+    }
+
+    /**
+     * Crear una cotización.
+     */   
+
+    public function store(StoreQuotationRequest $request): JsonResponse
+    {
+        $quotation = $this->createQuotationAction
+            ->execute($request->validated());
+
+        return response()->json([
+            'message' => 'Cotización creada correctamente.',
+            'data' => new QuotationResource($quotation),
+        ], 201);
+    }
+
+
+    /**
+     * Actualizar una cotización.
+     */
+
+    public function update(UpdateQuotationRequest $request, Quotation $quotation): JsonResponse
+    {
+        $quotation = $this->updateQuotationAction
+            ->execute($quotation, $request->validated());
+
+        return response()->json([
+            'message' => 'Cotización actualizada correctamente.',
+            'data' => new QuotationResource($quotation),
+        ]);
+    }
 }

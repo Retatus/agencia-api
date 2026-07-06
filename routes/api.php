@@ -17,6 +17,8 @@ use App\Http\Controllers\Pricing\PriceTypeController;
 
 use App\Http\Controllers\CRM\CustomerController;
 
+use App\Quotation\Http\Controllers\QuotationController;
+
 // php artisan serve --port=8001
 
 Route::group([], function () {
@@ -39,6 +41,10 @@ Route::group([], function () {
     Route::prefix('crm')->group(function () {
         Route::apiResource('customers', CustomerController::class);
     });
+
+    Route::prefix('quotations')->group(function () {
+        Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
+    });     
 });
 
 
