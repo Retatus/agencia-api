@@ -16,8 +16,34 @@ abstract class BaseFilter
         $this->request = $request;
     }
 
+    public function apply(Builder $query): Builder
+    {
+        $this->query = $query;
+
+        // Ejecuta métodos que coincidan con los parámetros de la URL
+        foreach ($this->request->query() as $key => $value) {
+
+            if (
+                method_exists($this, $key) &&
+                $value !== null &&
+                $value !== ''
+            ) {
+                $this->{$key}($value);
+            }
+        }
+
+        // Permite lógica adicional del filtro
+        $this->boot();
+
+        return $this->query;
+    }
+
     /**
-     * Aplica los filtros al query.
+     * Cada filtro puede sobrescribir este método
+     * para ejecutar lógica adicional.
      */
-    abstract public function apply(Builder $query): Builder;
+    protected function boot(): void
+    {
+        //
+    }
 }

@@ -3,24 +3,22 @@
 namespace App\Filters\CRM;
 
 use App\Filters\BaseFilter;
-use Illuminate\Database\Eloquent\Builder;
 
 class CustomerFilter extends BaseFilter
 {
-    public function apply(Builder $query): Builder
+    /**
+     * Lógica adicional que siempre se ejecuta.
+     */
+    protected function boot(): void
     {
-        $this->query = $query;
-
         $this->search();
-        $this->documentType();
-        $this->active();
         $this->sorting();
-
-        return $this->query;
     }
 
     /**
-     * Buscar por múltiples campos.
+     * Búsqueda general.
+     *
+     * ?search=juan
      */
     protected function search(): void
     {
@@ -30,47 +28,129 @@ class CustomerFilter extends BaseFilter
             return;
         }
 
-        $this->query->where(function ($q) use ($search) {
-            $q->where('document_number', 'like', "%{$search}%")
-              ->orWhere('first_name', 'like', "%{$search}%")
-              ->orWhere('last_name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('phone', 'like', "%{$search}%");
+        $this->query->where(function ($query) use ($search) {
+            $query->where('document_number', 'like', "%{$search}%")
+                ->orWhere('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('phone', 'like', "%{$search}%");
         });
     }
 
     /**
-     * Filtrar por tipo de documento.
+     * Tipo de documento.
+     *
+     * ?document_type_id=1
      */
-    protected function documentType(): void
+    public function document_type_id($value): void
     {
-        if (!$this->request->filled('document_type_id')) {
-            return;
-        }
-
         $this->query->where(
             'document_type_id',
-            $this->request->integer('document_type_id')
+            $value
         );
     }
 
     /**
-     * Filtrar por estado (activo/inactivo).
+     * Documento.
+     *
+     * ?document_number=12345678
      */
-    protected function active(): void
+    public function document_number($value): void
     {
-        if (!$this->request->has('active')) {
-            return;
-        }
+        $this->query->where(
+            'document_number',
+            'like',
+            "%{$value}%"
+        );
+    }
 
+    /**
+     * Nombre.
+     *
+     * ?first_name=juan
+     */
+    public function first_name($value): void
+    {
+        $this->query->where(
+            'first_name',
+            'like',
+            "%{$value}%"
+        );
+    }
+
+    /**
+     * Apellidos.
+     *
+     * ?last_name=perez
+     */
+    public function last_name($value): void
+    {
+        $this->query->where(
+            'last_name',
+            'like',
+            "%{$value}%"
+        );
+    }
+
+    /**
+     * Email.
+     *
+     * ?email=test@test.com
+     */
+    public function email($value): void
+    {
+        $this->query->where(
+            'email',
+            'like',
+            "%{$value}%"
+        );
+    }
+
+    /**
+     * Ciudad.
+     *
+     * ?city=Lima
+     */
+    public function city($value): void
+    {
+        $this->query->where(
+            'city',
+            'like',
+            "%{$value}%"
+        );
+    }
+
+    /**
+     * País.
+     *
+     * ?country=Perú
+     */
+    public function country($value): void
+    {
+        $this->query->where(
+            'country',
+            'like',
+            "%{$value}%"
+        );
+    }
+
+    /**
+     * Activo.
+     *
+     * ?active=true
+     */
+    public function active($value): void
+    {
         $this->query->where(
             'active',
-            $this->request->boolean('active')
+            filter_var($value, FILTER_VALIDATE_BOOLEAN)
         );
     }
 
     /**
      * Ordenamiento.
+     *
+     * ?sort=first_name&direction=desc
      */
     protected function sorting(): void
     {
@@ -84,7 +164,7 @@ class CustomerFilter extends BaseFilter
 
         $sort = $this->request->input('sort', 'last_name');
 
-        if (!in_array($sort, $allowed)) {
+        if (! in_array($sort, $allowed)) {
             $sort = 'last_name';
         }
 
@@ -92,7 +172,7 @@ class CustomerFilter extends BaseFilter
             $this->request->input('direction', 'asc')
         );
 
-        if (!in_array($direction, ['asc', 'desc'])) {
+        if (! in_array($direction, ['asc', 'desc'])) {
             $direction = 'asc';
         }
 

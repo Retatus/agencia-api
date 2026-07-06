@@ -27,6 +27,21 @@ class Service extends Model
         'updated_at',
     ];
 
+    public function provider()
+    {
+        return $this->belongsTo(Provider::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(ServiceCategory::class);
+    }
+
+    public function variants()
+    {
+        return $this->hasMany(ServiceVariant::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
