@@ -25,6 +25,7 @@ Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
     Route::apiResource('currencies', CurrencyController::class);
     Route::apiResource('passenger-types', PassengerTypeController::class);
+    Route::get('document-types/select', [DocumentTypeController::class, 'select']);
     Route::apiResource('document-types', DocumentTypeController::class);
 
     Route::apiResource('service-categories', ServiceCategoryController::class);

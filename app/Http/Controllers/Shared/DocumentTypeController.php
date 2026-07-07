@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\DocumentType\StoreDocumentTypeRequest;
-use App\Http\Requests\DocumentType\UpdateDocumentTypeRequest;
+
+use App\Http\Requests\Shared\DocumentType\StoreDocumentTypeRequest;
+use App\Http\Requests\Shared\DocumentType\UpdateDocumentTypeRequest;
 use App\Http\Resources\Shared\DocumentTypeResource;
+use App\Http\Resources\Shared\DocumentTypeSelectResource;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use App\Models\DocumentType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -65,5 +68,12 @@ class DocumentTypeController extends Controller
         return response()->json([
             'message' => 'DocumentType deleted successfully.'
         ]);
+    }
+
+    public function select(): AnonymousResourceCollection
+    {
+        return DocumentTypeSelectResource::collection(
+            DocumentType::orderBy('name')->get()
+        );
     }
 }
