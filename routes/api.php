@@ -19,7 +19,7 @@ use App\Http\Controllers\CRM\CustomerController;
 
 use App\Quotation\Http\Controllers\QuotationController;
 
-// php artisan serve --port=8001
+
 
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
@@ -39,16 +39,23 @@ Route::group([], function () {
         Route::apiResource('price-types', PriceTypeController::class);
     });
 
-    Route::prefix('crm')->group(function () {
-        Route::apiResource('customers', CustomerController::class);
-    });
+    // Route::prefix('crm')->group(function () {
+    //     Route::apiResource('customers', CustomerController::class);
+    // });
+
+    Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
+    Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
+    Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
+    Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
+    Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     Route::prefix('quotations')->group(function () {
         Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
     });     
 });
 
-
+// php artisan serve --port=8001
 
 // php artisan make:model PassengerType
 // php artisan make:controller Api/PassengerTypeController --api

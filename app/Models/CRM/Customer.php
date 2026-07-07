@@ -46,6 +46,11 @@ class Customer extends Model
         'active'     => 'boolean',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
