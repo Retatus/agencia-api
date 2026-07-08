@@ -2,7 +2,7 @@
 
 namespace Database\Seeders\CRM;
 
-use App\Models\Customer;
+use App\Models\CRM\Customer;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 

@@ -6,6 +6,23 @@ use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+use Database\Seeders\Shared\DocumentTypeSeeder;
+use Database\Seeders\ProvidersSeeder;
+use Database\Seeders\ServiceCategorySeeder;
+use Database\Seeders\ServiceSeeder;
+use Database\Seeders\ServiceVariantSeeder;
+use Database\Seeders\CurrenciesSeeder;
+use Database\Seeders\Pricing\PriceListSeeder;
+use Database\Seeders\Shared\PassengerTypesSeeder;
+use Database\Seeders\Pricing\PriceTypeSeeder;
+use Database\Seeders\Pricing\PricesSeeder;
+use Database\Seeders\CRM\CustomerSeeder;
+use Database\Seeders\Quotation\QuotationStatusSeeder;
+use Database\Seeders\Quotation\QuotationSeeder;
+use Database\Seeders\Quotation\QuotationPassengerSeeder;
+use Database\Seeders\Quotation\QuotationItemSeeder;
+
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -18,6 +35,24 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+        ]);
+
+        $this->call([
+            DocumentTypeSeeder::class,
+            ProvidersSeeder::class,
+            ServiceCategorySeeder::class,
+            ServiceSeeder::class,
+            ServiceVariantSeeder::class,
+            CurrenciesSeeder::class,
+            PriceListSeeder::class,
+            PassengerTypesSeeder::class,
+            PriceTypeSeeder::class,
+            PricesSeeder::class,
+            CustomerSeeder::class,
+            QuotationStatusSeeder::class,
+            QuotationSeeder::class,
+            QuotationPassengerSeeder::class,
+            QuotationItemSeeder::class,
         ]);
     }
 }

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('services', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('code', 10)->unique();
             $table->foreignId('provider_id')
                 ->constrained('providers')

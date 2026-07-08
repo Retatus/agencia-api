@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProvidersSeeder extends Seeder
 {
@@ -15,6 +16,7 @@ class ProvidersSeeder extends Seeder
     {
         $providers = [
             [
+                'uuid' => Str::uuid(),
                 'code' => '001',
                 'business_name' => 'Proveedor 1',
                 'commercial_name' => 'Proveedor 1',
@@ -28,6 +30,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '002',
                 'business_name' => 'Proveedor 2',
                 'commercial_name' => 'Proveedor 2',
@@ -41,6 +44,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ], 
             [
+                'uuid' => Str::uuid(),
                 'code' => '003',
                 'business_name' => 'Proveedor 3',
                 'commercial_name' => 'Proveedor 3',
@@ -54,6 +58,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '004',
                 'business_name' => 'Proveedor 4',
                 'commercial_name' => 'Proveedor 4',
@@ -67,6 +72,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '005',
                 'business_name' => 'Proveedor 5',
                 'commercial_name' => 'Proveedor 5',
@@ -80,6 +86,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '006',
                 'business_name' => 'Proveedor 6',
                 'commercial_name' => 'Proveedor 6',
@@ -93,6 +100,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '007',
                 'business_name' => 'Proveedor 7',
                 'commercial_name' => 'Proveedor 7',
@@ -106,6 +114,7 @@ class ProvidersSeeder extends Seeder
                 'active' => true,
             ],
             [
+                'uuid' => Str::uuid(),
                 'code' => '008',
                 'business_name' => 'Proveedor 8',
                 'commercial_name' => 'Proveedor 8',
@@ -124,6 +133,7 @@ class ProvidersSeeder extends Seeder
             DB::table('providers')->updateOrInsert(
                 ['code' => $provider['code']],
                 [
+                    'uuid' => $provider['uuid'],
                     'business_name' => $provider['business_name'],
                     'commercial_name' => $provider['commercial_name'],
                     'document_type_id' => $provider['document_type_id'],

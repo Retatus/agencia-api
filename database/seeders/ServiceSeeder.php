@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ServiceSeeder extends Seeder
 {
@@ -16,6 +17,7 @@ class ServiceSeeder extends Seeder
         $services = [
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0001',
                 'provider_id' => 1,
                 'service_categories_id' => 1,
@@ -24,6 +26,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0002',
                 'provider_id' => 2,
                 'service_categories_id' => 2,
@@ -32,6 +35,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0003',
                 'provider_id' => 3,
                 'service_categories_id' => 3,
@@ -40,6 +44,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0004',
                 'provider_id' => 4,
                 'service_categories_id' => 4,
@@ -48,6 +53,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0005',
                 'provider_id' => 5,
                 'service_categories_id' => 5,
@@ -56,6 +62,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0006',
                 'provider_id' => 6,
                 'service_categories_id' => 6,
@@ -64,6 +71,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0007',
                 'provider_id' => 7,
                 'service_categories_id' => 7,
@@ -72,6 +80,7 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code' => 'SER0008',
                 'provider_id' => 8,
                 'service_categories_id' => 8,
@@ -88,7 +97,7 @@ class ServiceSeeder extends Seeder
                 ['code' => $service['code']],
 
                 [
-
+                    'uuid' => $service['uuid'],
                     'provider_id' => $service['provider_id'],
                     'service_categories_id' => $service['service_categories_id'],
                     'name' => $service['name'],

@@ -5,6 +5,7 @@ namespace Database\Seeders\Pricing;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PriceListSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class PriceListSeeder extends Seeder
         $priceLists = [
 
             [
+                'uuid' => Str::uuid(),
                 'code'        => 'GENERAL2026',
                 'name'        => 'Tarifa General 2026',
                 'description' => 'Lista principal para clientes nacionales y extranjeros.',
@@ -31,6 +33,7 @@ class PriceListSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code'        => 'CORP2026',
                 'name'        => 'Tarifa Corporativa 2026',
                 'description' => 'Precios especiales para empresas.',
@@ -42,6 +45,7 @@ class PriceListSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code'        => 'WHOLESALE2026',
                 'name'        => 'Tarifa Mayorista 2026',
                 'description' => 'Lista para agencias asociadas y operadores.',
@@ -53,6 +57,7 @@ class PriceListSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
                 'code'        => 'PROMOJUL2026',
                 'name'        => 'Promoción Julio 2026',
                 'description' => 'Campaña promocional de julio.',
@@ -74,6 +79,7 @@ class PriceListSeeder extends Seeder
                 ],
 
                 [
+                    'uuid'         => $row['uuid'],
                     'name'         => $row['name'],
                     'description'  => $row['description'],
                     'currency_id'  => $row['currency_id'],
@@ -87,7 +93,6 @@ class PriceListSeeder extends Seeder
                 ]
 
             );
-
         }
     }
 }

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('price_lists', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('code',30)->unique();
             $table->string('name',150);
             $table->text('description')->nullable();
