@@ -39,16 +39,17 @@ Route::group([], function () {
         Route::apiResource('price-types', PriceTypeController::class);
     });
 
-    // Route::prefix('crm')->group(function () {
-    //     Route::apiResource('customers', CustomerController::class);
-    // });
+    // no afecta en dada el echo de agregar customer:uuid en las rutas
+    Route::prefix('crm')->group(function () {
+        Route::apiResource('customers', CustomerController::class);
+    });
 
-    Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
-    Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
-    Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
-    Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
+    // Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
+    // Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
+    // Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
+    // Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
+    // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
+    // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     Route::prefix('quotations')->group(function () {
         Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);

@@ -46,6 +46,14 @@ class Customer extends Model
         'active'     => 'boolean',
     ];
 
+    /**
+     * Indica qué columnas deben generarse automáticamente como UUID.
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
     public function getRouteKeyName(): string
     {
         return 'uuid';

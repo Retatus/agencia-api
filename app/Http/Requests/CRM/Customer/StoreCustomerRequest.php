@@ -22,7 +22,6 @@ class StoreCustomerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'uuid' => 'required|uuid',
             'document_type_id' => 'required|exists:document_types,id',
             'document_number' => 'required|unique:customers,document_number',
             'first_name' => 'required|string|max:255',
@@ -43,8 +42,6 @@ class StoreCustomerRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'uuid.required' => 'El campo uuid es obligatorio.',
-            'uuid.uuid' => 'El campo uuid debe ser un UUID válido.',
             'document_type_id.required' => 'El campo document_type_id es obligatorio.',
             'document_type_id.exists' => 'El document_type_id proporcionado no existe.',
             'document_number.required' => 'El campo document_number es obligatorio.',

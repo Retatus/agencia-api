@@ -3,53 +3,82 @@
 namespace App\Http\Controllers\CRM;
 
 use App\Filters\CRM\CustomerFilter;
-use App\Http\Controllers\BaseCrudController;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\CRM\Customer\StoreCustomerRequest;
 use App\Http\Requests\CRM\Customer\UpdateCustomerRequest;
 use App\Http\Resources\CRM\CustomerResource;
-use Illuminate\Http\JsonResponse;
 use App\Models\CRM\Customer;
-
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CustomerController extends BaseCrudController
+class CustomerController extends Controller
 {
-    protected string $model = Customer::class;
+    /**
+     * Listado de clientes.
+     */
+    public function index(Request $request)
+    {
+        $query = Customer::query()
+            ->with('documentType');
 
-    protected string $resource = CustomerResource::class;
+        $query = (new CustomerFilter($request))->apply($query);
 
-    protected ?string $filter = CustomerFilter::class;
+        $customers = $query->paginate(
+            $request->integer('per_page', 20)
+        );
 
-    protected array $with = [
-        'documentType'
-    ];
-
-    protected string $defaultSort = 'last_name';
+        return CustomerResource::collection($customers);
+    }
 
     /**
-     * Crear una cotización.
+     * Mostrar un cliente.
      */
-    public function store(request $request): JsonResponse
+    public function show(Customer $customer): CustomerResource
+    {
+        $customer->load('documentType');
+
+        return new CustomerResource($customer);
+    }
+
+    /**
+     * Crear un cliente.
+     */
+    public function store(StoreCustomerRequest $request): JsonResponse
     {
         $customer = Customer::create($request->validated());
 
+        $customer->load('documentType');
+
         return response()->json([
-            'message' => 'Cliente creados correctamente.',
+            'message' => 'Cliente creado correctamente.',
             'customer' => new CustomerResource($customer),
         ], 201);
     }
 
-
     /**
-     * Actualizar una cotización.
+     * Actualizar un cliente.
      */
-    public function update(request $request, string $id): JsonResponse
-    {
-        $customer = Customer::update($request->validated());
+    public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse {
+
+        $customer->update($request->validated());
+
+        $customer->load('documentType');
 
         return response()->json([
             'message' => 'Cliente actualizado correctamente.',
             'customer' => new CustomerResource($customer),
+        ]);
+    }
+
+    /**
+     * Eliminar un cliente.
+     */
+    public function destroy(Customer $customer): JsonResponse
+    {
+        $customer->delete();
+
+        return response()->json([
+            'message' => 'Cliente eliminado correctamente.',
         ]);
     }
 }
