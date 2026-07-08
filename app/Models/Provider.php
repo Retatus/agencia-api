@@ -17,6 +17,7 @@ class Provider extends Model
     protected $table = 'providers';
 
     protected $fillable = [
+        'uuid',
         'code',
         'business_name',
         'commercial_name',
@@ -39,6 +40,16 @@ class Provider extends Model
         'updated_at',
         'deleted_at',
     ];
+
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -104,14 +115,5 @@ class Provider extends Model
 
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ROUTE MODEL BINDING
-    |--------------------------------------------------------------------------
-    */
-
-    public function getRouteKeyName(): string
-    {
-        return 'uuid';
-    }
+    
 }

@@ -13,6 +13,7 @@ class PriceList extends Model
     protected $table = 'price_lists';
 
     protected $fillable = [
+        'uuid',
         'code',
         'name',
         'description',
