@@ -13,7 +13,7 @@ class Service extends Model
         'uuid',
         'code',
         'provider_id',
-        'service_categories_id',
+        'service_category_id',
         'name',
         'description',
         'active',

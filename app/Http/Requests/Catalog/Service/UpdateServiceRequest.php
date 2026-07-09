@@ -24,7 +24,7 @@ class UpdateServiceRequest extends FormRequest
         return [
             'code' => 'sometimes|string|max:10|unique:services,code,' . $this->route('service')->id,
             'provider_id' => 'sometimes|exists:providers,id',
-            'service_categories_id' => 'sometimes|exists:service_categories,id',
+            'service_category_id' => 'sometimes|exists:service_categories,id',
             'name' => 'sometimes|string|max:100',
             'description' => 'nullable|string|max:255',
             'active' => 'boolean',
@@ -38,7 +38,7 @@ class UpdateServiceRequest extends FormRequest
             'code.max' => 'El código no debe exceder los 10 caracteres.',
             'code.unique' => 'Ya existe un servicio con este código.',
             'provider_id.exists' => 'El proveedor seleccionado no existe.',
-            'service_categories_id.exists' => 'La categoría de servicio seleccionada no existe.',
+            'service_category_id.exists' => 'La categoría de servicio seleccionada no existe.',
             'name.string' => 'El nombre debe ser una cadena de texto.',
             'name.max' => 'El nombre no debe exceder los 100 caracteres.',
             'description.string' => 'La descripción debe ser una cadena de texto.',
