@@ -20,7 +20,13 @@ class ServiceController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
         
-        $query = Service::query();
+        $query = Service::query()->with([
+            'provider' => function ($q) {
+                $q->select('id', 'uuid', 'code', 'business_name');
+            },
+            'serviceCategory',
+            'variants'
+        ]);
         
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -48,6 +54,12 @@ class ServiceController extends Controller
 
     public function show(Service $service): ServiceResource
     {
+        $service->load([
+            'provider' => function ($q) {
+                $q->select('id', 'uuid', 'code', 'business_name');
+            },
+            'serviceCategory',
+        ]);
         return new ServiceResource($service);
     }
 

@@ -10,6 +10,9 @@ use App\Models\ServiceCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use Illuminate\Http\Resources\Json\anonymousResourceCollection;
+use App\Http\Resources\Shared\ServiceCategorySelectResource;
+
 class ServiceCategoryController extends Controller
 {
     public function index(Request $request)
@@ -65,5 +68,12 @@ class ServiceCategoryController extends Controller
         return response()->json([
             'message' => 'Service category deleted successfully.'
         ]);
+    }
+
+    public function select(): AnonymousResourceCollection
+    {
+        return ServiceCategorySelectResource::collection(
+            ServiceCategory::orderBy('name')->get()
+        );
     }
 }

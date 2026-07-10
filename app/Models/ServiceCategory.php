@@ -20,4 +20,9 @@ class ServiceCategory extends Model
         'created_at',
         'updated_at',
     ];
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
 }

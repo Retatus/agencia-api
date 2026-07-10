@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\Provider\StoreProviderRequest;
 use App\Http\Requests\Catalog\Provider\UpdateProviderRequest;
 use App\Http\Resources\Catalog\ProviderResource;
+use App\Http\Resources\Catalog\ProviderSelectResource;
 use App\Filters\Catalog\ProviderFilter;
 use App\Models\Provider;
 use Illuminate\Http\JsonResponse;
@@ -72,5 +73,15 @@ class ProviderController extends Controller
             'success' => true,
             'message' => 'Proveedor eliminado correctamente.'
         ]);
+    }
+    
+    public function select()
+    {
+        $providers = Provider::select('id', 'business_name')
+            ->where('active', true)
+            ->orderBy('business_name')
+            ->get();
+            
+        return ProviderSelectResource::collection($providers);
     }
 }

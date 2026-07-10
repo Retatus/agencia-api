@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class Service extends Model
 {
+    use HasUuids;
+
     protected $table = 'services';
     
     protected $fillable = [
@@ -28,12 +31,22 @@ class Service extends Model
         'updated_at',
     ];
 
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function provider()
     {
         return $this->belongsTo(Provider::class);
     }
 
-    public function category()
+    public function serviceCategory()
     {
         return $this->belongsTo(ServiceCategory::class);
     }

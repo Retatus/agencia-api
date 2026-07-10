@@ -28,9 +28,11 @@ Route::group([], function () {
     Route::get('document-types/select', [DocumentTypeController::class, 'select']);
     Route::apiResource('document-types', DocumentTypeController::class);
 
+    Route::get('service-categories/select', [ServiceCategoryController::class, 'select']);
     Route::apiResource('service-categories', ServiceCategoryController::class);
     Route::apiResource('services', ServiceController::class);
     Route::apiResource('service-variants', ServiceVariantController::class);
+    Route::get('providers/select', [ProviderController::class, 'select']);
     Route::apiResource('providers', ProviderController::class);
 
     Route::prefix('pricing')->group(function () {
