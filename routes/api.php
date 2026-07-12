@@ -18,6 +18,7 @@ use App\Http\Controllers\Pricing\PriceTypeController;
 use App\Http\Controllers\CRM\CustomerController;
 
 use App\Quotation\Http\Controllers\QuotationController;
+use App\Quotation\Http\Controllers\QuotationItineraryController;
 
 
 
@@ -30,7 +31,10 @@ Route::group([], function () {
 
     Route::get('service-categories/select', [ServiceCategoryController::class, 'select']);
     Route::apiResource('service-categories', ServiceCategoryController::class);
+
+    Route::get('services/search', [ServiceController::class, 'search']);
     Route::apiResource('services', ServiceController::class);
+    
     Route::apiResource('service-variants', ServiceVariantController::class);
     Route::get('providers/select', [ProviderController::class, 'select']);
     Route::apiResource('providers', ProviderController::class);
@@ -55,8 +59,30 @@ Route::group([], function () {
 
     Route::prefix('quotations')->group(function () {
         Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
-    });     
+    });
+    
+    Route::prefix('quotations-itineraries')->group(function () {
+        Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
+    });
+    // Route::get('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'items'])->name('quotations-itineraries.items');
+    // Route::post('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'itemsStore'])->name('quotations-itineraries.items.store');
+    // Route::put('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsUpdate'])->name('quotations-itineraries.items.update');
+    // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
+    
 });
+
+// para entidades que usan uuid en el modelo se debe de referenciar el uuid 
+// use Illuminate\Database\Eloquent\Concerns\HasUuids;
+// use HasUuids;
+// public function uniqueIds(): array
+// {
+//     return ['uuid'];
+// }
+
+// public function getRouteKeyName(): string
+// {
+//     return 'uuid';
+// }
 
 // php artisan serve --port=8001
 
