@@ -20,6 +20,7 @@ use Database\Seeders\CRM\CustomerSeeder;
 use Database\Seeders\Quotation\QuotationStatusSeeder;
 use Database\Seeders\Quotation\QuotationSeeder;
 use Database\Seeders\Quotation\QuotationPassengerSeeder;
+use Database\Seeders\Quotation\QuotationItinerarySeeder;
 use Database\Seeders\Quotation\QuotationItemSeeder;
 
 
@@ -52,6 +53,7 @@ class DatabaseSeeder extends Seeder
             QuotationStatusSeeder::class,
             QuotationSeeder::class,
             QuotationPassengerSeeder::class,
+            QuotationItinerarySeeder::class,
             QuotationItemSeeder::class,
         ]);
     }

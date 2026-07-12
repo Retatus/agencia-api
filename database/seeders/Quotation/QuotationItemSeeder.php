@@ -2,123 +2,113 @@
 
 namespace Database\Seeders\Quotation;
 
+//use App\Models\Service\Service;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Service;
 
 class QuotationItemSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('quotation_items')->insert([
+        DB::table('quotation_items')->truncate();
 
-            [
-                'quotation_id' => 1,
+        $itineraries = DB::table('quotation_itineraries')->get();
 
-                'service_variant_id' => 1,
+        foreach ($itineraries as $itinerary) {
 
-                'price_id' => 1,
+            $hotel = Service::where('code', 'SER0001')->first();
+            $tour = Service::where('code', 'SER0002')->first();
+            $transport = Service::where('code', 'SER0003')->first();
 
-                'provider_name' => 'Peru Travel SAC',
+            if ($hotel) {
 
-                'service_name' => 'City Tour Cusco',
+                DB::table('quotation_items')->insert([
+                    'quotation_itinerary_id' => $itinerary->id,
+                    'service_id' => $hotel->id,
+                    'service_variant_id' => null,
+                    'item_type' => 'CATALOG',
+                    'name' => $hotel->name,
+                    'variant_name' => null,
+                    'description' => $hotel->description,
+                    'quantity' => 1,
+                    'unit_cost' => 80,
+                    'unit_price' => 120,
+                    'subtotal' => 120,
+                    'sort_order' => 1,
+                    'active' => true,
+                    'calculated_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-                'variant_name' => 'Servicio Compartido',
+            if ($tour) {
 
-                'service_date' => now()->addDays(20),
+                DB::table('quotation_items')->insert([
+                    'quotation_itinerary_id' => $itinerary->id,
+                    'service_id' => $tour->id,
+                    'service_variant_id' => null,
+                    'item_type' => 'CATALOG',
+                    'name' => $tour->name,
+                    'variant_name' => null,
+                    'description' => $tour->description,
+                    'quantity' => 2,
+                    'price_id' => null,
+                    'unit_cost' => 25,
+                    'unit_price' => 40,
+                    'subtotal' => 80,
+                    'sort_order' => 2,
+                    'active' => true,
+                    'calculated_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
+            if ($transport) {
+
+                DB::table('quotation_items')->insert([
+                    'quotation_itinerary_id' => $itinerary->id,
+                    'service_id' => $transport->id,
+                    'service_variant_id' => null,
+                    'item_type' => 'CATALOG',
+                    'name' => $transport->name,
+                    'variant_name' => null,
+                    'description' => $transport->description,
+                    'quantity' => 1,
+                    'price_id' => null,
+                    'unit_cost' => 15,
+                    'unit_price' => 30,
+                    'subtotal' => 30,
+                    'sort_order' => 3,
+                    'active' => true,
+                    'calculated_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            // Item libre
+            DB::table('quotation_items')->insert([
+                'quotation_itinerary_id' => $itinerary->id,
+                'service_id' => null,
+                'service_variant_id' => null,
+                'item_type' => 'CUSTOM',
+                'name' => 'Botella de Agua',
+                'variant_name' => null,
+                'description' => 'Cortesía',
                 'quantity' => 2,
-
-                'unit_cost' => 80,
-
-                'unit_price' => 120,
-
-                'total_cost' => 160,
-
-                'total_price' => 240,
-
-                'remarks' => 'Recojo desde hotel.',
-
-                'sort_order' => 1,
-
+                'price_id' => null,
+                'unit_cost' => 0,
+                'unit_price' => 0,
+                'subtotal' => 0,
+                'sort_order' => 99,
+                'active' => true,
                 'calculated_at' => now(),
-
                 'created_at' => now(),
-
                 'updated_at' => now(),
-            ],
-
-            [
-                'quotation_id' => 1,
-
-                'service_variant_id' => 2,
-
-                'price_id' => 2,
-
-                'provider_name' => 'Hotel Cusco Plaza',
-
-                'service_name' => 'Hospedaje',
-
-                'variant_name' => 'Habitación Doble',
-
-                'service_date' => now()->addDays(20),
-
-                'quantity' => 2,
-
-                'unit_cost' => 90,
-
-                'unit_price' => 150,
-
-                'total_cost' => 180,
-
-                'total_price' => 300,
-
-                'remarks' => '2 noches.',
-
-                'sort_order' => 2,
-
-                'calculated_at' => now(),
-
-                'created_at' => now(),
-
-                'updated_at' => now(),
-            ],
-
-            [
-                'quotation_id' => 2,
-
-                'service_variant_id' => 3,
-
-                'price_id' => 3,
-
-                'provider_name' => 'Luxury Transport',
-
-                'service_name' => 'Traslado Aeropuerto',
-
-                'variant_name' => 'Privado',
-
-                'service_date' => now()->addDays(35),
-
-                'quantity' => 1,
-
-                'unit_cost' => 50,
-
-                'unit_price' => 80,
-
-                'total_cost' => 50,
-
-                'total_price' => 80,
-
-                'remarks' => null,
-
-                'sort_order' => 1,
-
-                'calculated_at' => now(),
-
-                'created_at' => now(),
-
-                'updated_at' => now(),
-            ],
-
-        ]);
+            ]);
+        }
     }
 }
