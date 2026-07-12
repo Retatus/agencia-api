@@ -39,8 +39,7 @@ class QuotationController extends BaseCrudController
         'priceList',
         'status',
         'passengers.passengerType',
-        'items.serviceVariant.service.provider',
-        'items.price.priceType',
+        'itineraries'
     ];
 
     public function __construct(

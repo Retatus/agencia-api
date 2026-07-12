@@ -36,8 +36,8 @@ class Quotation extends Model
     ];
 
     protected $casts = [
-        'travel_date'   => 'date',
-        'valid_until'   => 'date',
+        'travel_date'   => 'date:Y-m-d',
+        'valid_until'   => 'date:Y-m-d',
         'exchange_rate' => 'decimal:6',
         'subtotal'      => 'decimal:2',
         'discount'      => 'decimal:2',
@@ -77,8 +77,8 @@ class Quotation extends Model
         return $this->hasMany(QuotationPassenger::class);
     }
 
-    public function items()
+    public function itineraries()
     {
-        return $this->hasMany(QuotationItem::class);
+        return $this->hasMany(QuotationItinerary::class);
     }
 }

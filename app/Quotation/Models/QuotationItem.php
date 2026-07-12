@@ -15,7 +15,8 @@ class QuotationItem extends Model
     protected $table = 'quotation_items';
 
     protected $fillable = [
-        'quotation_id',
+        'quotation_itinerary_id',
+        'service_id',
         'service_variant_id',
         'price_id',
         'provider_name',
@@ -44,11 +45,6 @@ class QuotationItem extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
-
-    public function quotation()
-    {
-        return $this->belongsTo(Quotation::class);
-    }
 
     public function serviceVariant()
     {
