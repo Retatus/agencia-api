@@ -9,83 +9,45 @@ class CreateQuotationAction
 {
     public function __construct(
         protected CreateQuotationHeaderAction $headerAction,
-        protected CreateQuotationPassengersAction $passengersAction,
-        protected CreateQuotationItemsAction $itemsAction,
-        protected CalculateQuotationTotalsAction $totalsAction
-    ) {
-    }
+        protected CreateQuotationItinerariesAction $itineraryAction,
+        protected CreateQuotationPassengersAction $passengerAction,
+        protected CalculateQuotationTotalsAction $totalsAction,
+    ) {}
 
-    /**
-     * Crear una cotización completa.
-     */
     public function execute(array $data): Quotation
     {
         return DB::transaction(function () use ($data) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Cabecera
-            |--------------------------------------------------------------------------
-            */
-
+            // Cabecera
             $quotation = $this->headerAction->execute($data);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Pasajeros
-            |--------------------------------------------------------------------------
-            */
-
-            $this->passengersAction->execute(
+            // Itinerarios + Items
+            $this->itineraryAction->execute(
                 $quotation,
-                $data['passengers']
+                $data['itineraries'] ?? []
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Servicios
-            |--------------------------------------------------------------------------
-            */
-
-            $this->itemsAction->execute(
+            // Pasajeros
+            $this->passengerAction->execute(
                 $quotation,
-                $data['items']
+                $data['passengers'] ?? []
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Totales
-            |--------------------------------------------------------------------------
-            */
+            // Totales
+            $quotation = $this->totalsAction->execute($quotation);
 
-            $quotation = $this->totalsAction->execute(
-                $quotation
-            );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Relaciones
-            |--------------------------------------------------------------------------
-            */
-
-            return $quotation->load([
-
+            return $quotation->fresh()->load([
                 'customer',
-
                 'currency',
-
                 'priceList',
-
                 'status',
 
+                'itineraries',
+                'itineraries.items',
+
+                'passengers',
                 'passengers.passengerType',
-
-                'items.serviceVariant.service',
-
-                'items.price.priceType',
-
             ]);
-
         });
     }
 }

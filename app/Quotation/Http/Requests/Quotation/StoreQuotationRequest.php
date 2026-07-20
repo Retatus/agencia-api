@@ -67,20 +67,72 @@ class StoreQuotationRequest extends FormRequest
 
             /*
             |--------------------------------------------------------------------------
+            | Itinerarios
+            |--------------------------------------------------------------------------
+            */
+            'itineraries' => ['required','array','min:1'],
+
+            'itineraries.*.day_number'
+                => ['required','numeric','min:1'],
+
+            'itineraries.*.travel_date'
+                => ['sometimes','date'],
+
+            'itineraries.*.title'
+                => ['sometimes','string','max:255'],
+
+            'itineraries.*.description'
+                => ['nullable','string','max:255'],
+
+            'itineraries.*.sort_order'
+                => ['required','numeric','min:1'],
+
+            'itineraries.*.subtotal'
+                => ['required','numeric','min:0'],
+
+            /*
+            |--------------------------------------------------------------------------
             | Servicios
             |--------------------------------------------------------------------------
             */
 
-            'items' => ['required','array','min:1'],
+            'itineraries.*.items' => ['required','array','min:1'],
 
-            'items.*.service_variant_id'
-                => ['required','exists:service_variants,id'],
+            'itineraries.*.items.*.item_type'
+                => ['required','in:SERVICE,CUSTOM'],
 
-            'items.*.service_date'
-                => ['required','date'],
+            'itineraries.*.items.*.name'
+                => ['required','string','max:255'],
 
-            'items.*.quantity'
+            'itineraries.*.items.*.variant_name'
+                => ['nullable','string','max:255'],
+
+            'itineraries.*.items.*.description'
+                => ['nullable','string','max:255'],
+
+            'itineraries.*.items.*.duration'
+                => ['nullable','string','max:255'],
+
+            'itineraries.*.items.*.quantity'
                 => ['required','numeric','min:1'],
+
+            'itineraries.*.items.*.unit_cost'
+                => ['required','numeric','min:0'],
+
+            'itineraries.*.items.*.unit_price'
+                => ['required','numeric','min:0'],
+
+            'itineraries.*.items.*.subtotal'
+                => ['required','numeric','min:0'],
+
+            'itineraries.*.items.*.sort_order'
+                => ['required','numeric','min:1'],
+
+            'itineraries.*.items.*.notes'
+                => ['nullable','string','max:255'],
+
+            'itineraries.*.items.*.active'
+                => ['required','boolean'],
         ];
     }
 
@@ -106,9 +158,65 @@ class StoreQuotationRequest extends FormRequest
             'passengers.array' => 'Los pasajeros deben ser un arreglo.',
             'passengers.min' => 'Debe agregar al menos un pasajero.',
 
-            'items.required' => 'Debe agregar al menos un servicio.',
-            'items.array' => 'Los servicios deben ser un arreglo.',
-            'items.min' => 'Debe agregar al menos un servicio.',
+            'itineraries.required' => 'Debe agregar al menos un itinerario.',
+            'itineraries.array' => 'Los itinerarios deben ser un arreglo.',
+            'itineraries.min' => 'Debe agregar al menos un itinerario.',
+
+            'itineraries.*.day_number.required' => 'El número de día es obligatorio.',
+            'itineraries.*.day_number.numeric' => 'El número de día debe ser un número.',
+            'itineraries.*.day_number.min' => 'El número de día debe ser mayor o igual a 1.',
+
+            'itineraries.*.travel_date.required' => 'La fecha de viaje es obligatoria.',
+            'itineraries.*.travel_date.date' => 'La fecha de viaje debe ser una fecha válida.',
+
+            'itineraries.*.title.required' => 'El título es obligatorio.',
+            'itineraries.*.title.string' => 'El título debe ser una cadena de texto.',
+            'itineraries.*.title.max' => 'El título debe tener menos de 255 caracteres.',
+
+            'itineraries.*.description.string' => 'La descripción debe ser una cadena de texto.',
+            'itineraries.*.description.max' => 'La descripción debe tener menos de 255 caracteres.',
+
+            'itineraries.*.sort_order.required' => 'El orden es obligatorio.',
+            'itineraries.*.sort_order.numeric' => 'El orden debe ser un número.',
+            'itineraries.*.sort_order.min' => 'El orden debe ser mayor o igual a 1.',
+
+            'itineraries.*.items.required' => 'Debe agregar al menos un servicio ok.',
+            'itineraries.*.items.array' => 'Los servicios deben ser un arreglo.',
+            'itineraries.*.items.min' => 'Debe agregar al menos un servicio.',
+
+            'itineraries.*.items.*.name.required' => 'El nombre es obligatorio.',
+            'itineraries.*.items.*.name.string' => 'El nombre debe ser una cadena de texto.',
+            'itineraries.*.items.*.name.max' => 'El nombre debe tener menos de 255 caracteres.',
+
+            'itineraries.*.items.*.description.string' => 'La descripción debe ser una cadena de texto.',
+            'itineraries.*.items.*.description.max' => 'La descripción debe tener menos de 255 caracteres.',
+
+            'itineraries.*.items.*.unit_cost.required' => 'El costo unitario es obligatorio.',
+            'itineraries.*.items.*.unit_cost.numeric' => 'El costo unitario debe ser un número.',
+            'itineraries.*.items.*.unit_cost.min' => 'El costo unitario debe ser mayor o igual a 0.',
+
+            'itineraries.*.items.*.unit_price.required' => 'El precio unitario es obligatorio.',
+            'itineraries.*.items.*.unit_price.numeric' => 'El precio unitario debe ser un número.',
+            'itineraries.*.items.*.unit_price.min' => 'El precio unitario debe ser mayor o igual a 0.',
+
+            'itineraries.*.items.*.quantity.required' => 'La cantidad es obligatoria.',
+            'itineraries.*.items.*.quantity.numeric' => 'La cantidad debe ser un número.',
+            'itineraries.*.items.*.quantity.min' => 'La cantidad debe ser mayor o igual a 1.',
+
+            'itineraries.*.items.*.sort_order.required' => 'El orden es obligatorio.',
+            'itineraries.*.items.*.sort_order.numeric' => 'El orden debe ser un número.',
+            'itineraries.*.items.*.sort_order.min' => 'El orden debe ser mayor o igual a 1.',
+
+            'itineraries.*.items.*.service_variant_id.required' => 'El servicio es obligatorio.',
+            'itineraries.*.items.*.service_variant_id.exists' => 'El servicio no existe.',
+
+            'itineraries.*.items.*.price_id.required' => 'El precio es obligatorio.',
+            'itineraries.*.items.*.price_id.exists' => 'El precio no existe.',
+
+            'itineraries.*.items.*.notes.string' => 'Las notas deben ser una cadena de texto.',
+            'itineraries.*.items.*.notes.max' => 'Las notas deben tener menos de 255 caracteres.',
+
+            'itineraries.*.items.*.active.boolean' => 'El campo activo debe ser verdadero o falso.',
         ];
     }
 }

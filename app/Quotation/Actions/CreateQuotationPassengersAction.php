@@ -3,20 +3,21 @@
 namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
-use App\Quotation\Models\QuotationPassenger;
 
 class CreateQuotationPassengersAction
 {
     /**
-     * Crear los pasajeros de una cotización.
+     * Crear pasajeros de la cotización.
      */
-    public function execute(Quotation $quotation, array $passengers): void {
+    public function execute(Quotation $quotation, array $passengers = []): void {
+
+        if (empty($passengers)) {
+            return;
+        }
 
         foreach ($passengers as $passenger) {
 
-            QuotationPassenger::create([
-
-                'quotation_id' => $quotation->id,
+            $quotation->passengers()->create([
 
                 'passenger_type_id' => $passenger['passenger_type_id'],
 
@@ -34,7 +35,7 @@ class CreateQuotationPassengersAction
 
                 'phone' => $passenger['phone'] ?? null,
 
-                'active' => true,
+                'active' => $passenger['active'] ?? true,
             ]);
         }
     }

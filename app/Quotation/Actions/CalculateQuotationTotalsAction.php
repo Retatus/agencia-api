@@ -11,18 +11,27 @@ class CalculateQuotationTotalsAction
      */
     public function execute(Quotation $quotation): Quotation
     {
-        // Asegurar que los items estén cargados
-        $quotation->loadMissing('items');
-
         /*
         |--------------------------------------------------------------------------
-        | Totales
+        | Cargar itinerarios e items
         |--------------------------------------------------------------------------
         */
 
-        $subtotalCost = $quotation->items->sum('subtotal_cost');
+        $quotation->loadMissing('itineraries.items');
 
-        $subtotalSale = $quotation->items->sum('subtotal_price');
+        /*
+        |--------------------------------------------------------------------------
+        | Subtotal
+        |--------------------------------------------------------------------------
+        */
+
+        $subtotal = 0;
+
+        foreach ($quotation->itineraries as $itinerary) {
+
+            $subtotal += $itinerary->items->sum('subtotal');
+
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -30,15 +39,15 @@ class CalculateQuotationTotalsAction
         |--------------------------------------------------------------------------
         */
 
-        $discount = $quotation->discount ?? 0;
+        $discount = (float) ($quotation->discount ?? 0);
 
         /*
         |--------------------------------------------------------------------------
-        | Impuestos
+        | Impuesto
         |--------------------------------------------------------------------------
         */
 
-        $tax = $quotation->tax ?? 0;
+        $tax = (float) ($quotation->tax ?? 0);
 
         /*
         |--------------------------------------------------------------------------
@@ -46,24 +55,25 @@ class CalculateQuotationTotalsAction
         |--------------------------------------------------------------------------
         */
 
-        $total = $subtotalSale - $discount + $tax;
+        $total = $subtotal - $discount + $tax;
 
         /*
         |--------------------------------------------------------------------------
-        | Actualizar cabecera
+        | Actualizar
         |--------------------------------------------------------------------------
         */
 
         $quotation->update([
 
-            'subtotal_cost' => $subtotalCost,
+            'subtotal' => $subtotal,
 
-            'subtotal' => $subtotalSale,
-
-            'total' => $total,
+            'total'    => $total,
 
         ]);
 
-        return $quotation->fresh();
+        return $quotation->fresh([
+            'itineraries',
+            'itineraries.items',
+        ]);
     }
 }

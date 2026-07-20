@@ -5,6 +5,7 @@ namespace App\Quotation\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\CRM\Customer;
 use App\Models\PriceList;
@@ -12,6 +13,7 @@ use App\Models\Currency;
 
 class Quotation extends Model
 {
+    use HasUuids;
     use HasFactory;
     use SoftDeletes;
 
@@ -45,6 +47,19 @@ class Quotation extends Model
         'total'         => 'decimal:2',
         'active'        => 'boolean',
     ];
+
+    /**
+     * Indica qué columnas deben generarse automáticamente como UUID.
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /*
     |--------------------------------------------------------------------------

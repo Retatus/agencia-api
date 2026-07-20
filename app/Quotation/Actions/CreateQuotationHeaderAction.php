@@ -29,13 +29,10 @@ class CreateQuotationHeaderAction
             |--------------------------------------------------------------------------
             */
 
-            'customer_id' => $data['customer_id'],
-
-            'currency_id' => $data['currency_id'],
-
-            'price_list_id' => $data['price_list_id'],
-
-            'quotation_status_id' => $this->draftStatus(),
+            'customer_id'          => $data['customer_id'],
+            'currency_id'          => $data['currency_id'],
+            'price_list_id'        => $data['price_list_id'],
+            'quotation_status_id'  => $data['quotation_status_id'] ?? $this->draftStatus(),
 
             /*
             |--------------------------------------------------------------------------
@@ -44,8 +41,15 @@ class CreateQuotationHeaderAction
             */
 
             'travel_date' => $data['travel_date'],
-
             'valid_until' => $data['valid_until'],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Tipo de cambio
+            |--------------------------------------------------------------------------
+            */
+
+            'exchange_rate' => $data['exchange_rate'] ?? 1,
 
             /*
             |--------------------------------------------------------------------------
@@ -59,15 +63,16 @@ class CreateQuotationHeaderAction
             |--------------------------------------------------------------------------
             | Totales
             |--------------------------------------------------------------------------
+            | Siempre inician en cero.
+            | El CalculateQuotationTotalsAction será el único responsable
+            | de calcularlos.
+            |--------------------------------------------------------------------------
             */
 
             'subtotal' => 0,
-
             'discount' => 0,
-
-            'tax' => 0,
-
-            'total' => 0,
+            'tax'       => 0,
+            'total'     => 0,
 
             /*
             |--------------------------------------------------------------------------
@@ -76,19 +81,17 @@ class CreateQuotationHeaderAction
             */
 
             'user_id' => Auth::id(),
-
-            'active' => true,
+            'active'  => $data['active'] ?? true,
 
         ]);
     }
 
     /**
-     * Estado inicial.
+     * Estado inicial de la cotización.
      */
     protected function draftStatus(): int
     {
-        return QuotationStatus::where('code', 'DRAFT')
-            ->value('id');
+        return QuotationStatus::where('code', 'DRAFT')->value('id');
     }
 
     /**
@@ -98,18 +101,20 @@ class CreateQuotationHeaderAction
     {
         $year = now()->year;
 
-        $lastQuotation = Quotation::whereYear('created_at', $year)
-            ->orderByDesc('id')
+        $last = Quotation::whereYear('created_at', $year)
+            ->latest('id')
             ->first();
 
-        $next = $lastQuotation
-            ? ((int) substr($lastQuotation->code, -5)) + 1
-            : 1;
+        $sequence = 1;
+
+        if ($last && preg_match('/(\d+)$/', $last->code, $matches)) {
+            $sequence = (int) $matches[1] + 1;
+        }
 
         return sprintf(
             'COT-%s-%05d',
             $year,
-            $next
+            $sequence
         );
     }
 }
