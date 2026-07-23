@@ -21,35 +21,17 @@ class UpdateQuotationRequest extends FormRequest
             |--------------------------------------------------------------------------
             */
 
-            'customer_id' => [
-                'required',
-                'exists:customers,id'
-            ],
+            'customer_id' => ['required','exists:customers,id'],
 
-            'currency_id' => [
-                'required',
-                'exists:currencies,id'
-            ],
+            'currency_id' => ['required','exists:currencies,id'],
 
-            'price_list_id' => [
-                'required',
-                'exists:price_lists,id'
-            ],
+            'price_list_id' => ['required','exists:price_lists,id'],
 
-            'travel_date' => [
-                'required',
-                'date'
-            ],
+            'travel_date' => ['required','date'],
 
-            'valid_until' => [
-                'required',
-                'date'
-            ],
+            'valid_until' => ['required','date'],
 
-            'notes' => [
-                'nullable',
-                'string'
-            ],
+            'notes' => ['nullable','string'],
 
             /*
             |--------------------------------------------------------------------------
@@ -57,61 +39,25 @@ class UpdateQuotationRequest extends FormRequest
             |--------------------------------------------------------------------------
             */
 
-            'passengers' => [
-                'required',
-                'array',
-                'min:1'
-            ],
+            'passengers' => ['required','array','min:1'],
 
-            'passengers.*.id' => [
-                'nullable',
-                'exists:quotation_passengers,id'
-            ],
+            'passengers.*.id' => [ 'nullable', 'exists:quotation_passengers,id'],
 
-            'passengers.*.passenger_type_id' => [
-                'required',
-                'exists:passenger_types,id'
-            ],
+            'passengers.*.passenger_type_id' => ['required','exists:passenger_types,id'],
 
-            'passengers.*.first_name' => [
-                'required',
-                'string',
-                'max:100'
-            ],
+            'passengers.*.first_name' => ['required','string','max:100'],
 
-            'passengers.*.last_name' => [
-                'required',
-                'string',
-                'max:100'
-            ],
+            'passengers.*.last_name' => ['required','string','max:100'],
 
-            'passengers.*.birth_date' => [
-                'nullable',
-                'date'
-            ],
+            'passengers.*.birth_date' => ['nullable','date'],
 
-            'passengers.*.document_number' => [
-                'nullable',
-                'string',
-                'max:30'
-            ],
+            'passengers.*.document_number' => ['nullable','string','max:30'],
 
-            'passengers.*.nationality' => [
-                'nullable',
-                'string',
-                'max:100'
-            ],
+            'passengers.*.nationality' => ['nullable','string','max:100'],
 
-            'passengers.*.email' => [
-                'nullable',
-                'email'
-            ],
+            'passengers.*.email' => ['nullable','email'],
 
-            'passengers.*.phone' => [
-                'nullable',
-                'string',
-                'max:50'
-            ],
+            'passengers.*.phone' => ['nullable','string','max:50'],
 
             /*
             |--------------------------------------------------------------------------
@@ -119,32 +65,15 @@ class UpdateQuotationRequest extends FormRequest
             |--------------------------------------------------------------------------
             */
 
-            'items' => [
-                'required',
-                'array',
-                'min:1'
-            ],
+            'items' => ['required','array','min:1'],
 
-            'items.*.id' => [
-                'nullable',
-                'exists:quotation_items,id'
-            ],
+            'items.*.id' => ['nullable','exists:quotation_items,id'],
 
-            'items.*.service_variant_id' => [
-                'required',
-                'exists:service_variants,id'
-            ],
+            'items.*.service_variant_id' => ['required','exists:service_variants,id'],
 
-            'items.*.service_date' => [
-                'required',
-                'date'
-            ],
+            'items.*.service_date' => ['required','date'],
 
-            'items.*.quantity' => [
-                'required',
-                'numeric',
-                'min:1'
-            ],
+            'items.*.quantity' => ['required','numeric','min:1'],
         ];
     }
 

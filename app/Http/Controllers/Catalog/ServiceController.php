@@ -25,7 +25,6 @@ class ServiceController extends Controller
                 $q->select('id', 'uuid', 'code', 'business_name');
             },
             'serviceCategory',
-            'variants'
         ]);
         
         if ($request->filled('search')) {
@@ -76,6 +75,84 @@ class ServiceController extends Controller
 
         return response()->json([
             'message' => 'Service deleted successfully.'
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $search = trim($request->input('search'));
+
+        $services = Service::query()
+            ->with([
+                'provider:id,business_name',
+                'serviceCategory:id,name',
+                //'currency:id,code,symbol',
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%");
+                });
+            })
+            ->where('active', true)
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'data' => $services,
+        ]);
+    }
+
+    public function variants(Service $service)
+    {
+        $variants = $service->variants()
+            ->where('active', true)
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+
+            'data' => $variants,
+        ]);
+    }
+
+    public function prices( Request $request, Service $service, int $variant_id) 
+    {
+        $request->validate([
+            'price_list_id' => 'nullable|integer',
+            'passenger_type_id' => 'nullable|integer',
+        ]);
+
+        $variant = $service->variants()
+            ->where('id', $variant_id)
+            ->where('active', true)
+            ->firstOrFail();
+
+        $prices = $variant->prices()
+            ->where('active', true)
+            ->when(
+                $request->filled('price_list_id'),
+                fn ($query) =>
+                    $query->where(
+                        'price_list_id',
+                        $request->integer('price_list_id')
+                    )
+            )
+            ->when(
+                $request->filled('passenger_type_id'),
+                fn ($query) =>
+                    $query->where(
+                        'passenger_type_id',
+                        $request->integer('passenger_type_id')
+                    )
+            )
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $prices,
         ]);
     }
 }

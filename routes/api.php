@@ -33,6 +33,8 @@ Route::group([], function () {
     Route::apiResource('service-categories', ServiceCategoryController::class);
 
     Route::get('services/search', [ServiceController::class, 'search']);
+    Route::get('services/{service}/variants', [ServiceController::class, 'variants']);
+    Route::get('services/{service}/variants/{variant_id}/prices', [ServiceController::class, 'prices']);
     Route::apiResource('services', ServiceController::class);
     
     Route::apiResource('service-variants', ServiceVariantController::class);
@@ -71,6 +73,7 @@ Route::group([], function () {
     
 });
 
+// El request del archivo debe de contener todos los campos de la entidad para pasar a insertar en la base de datos
 // para entidades que usan uuid en el modelo se debe de referenciar el uuid 
 // use Illuminate\Database\Eloquent\Concerns\HasUuids;
 // use HasUuids;

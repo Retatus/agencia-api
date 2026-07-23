@@ -98,8 +98,14 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items' => ['required','array','min:1'],
 
+            'itineraries.*.items.*.service_id'
+                => ['nullable','exists:services,id'],
+
+            'itineraries.*.items.*.service_variant_id'
+                => ['nullable','exists:service_variants,id'],
+
             'itineraries.*.items.*.item_type'
-                => ['required','in:SERVICE,CUSTOM'],
+                => ['required','in:CATALOG,CUSTOM'],
 
             'itineraries.*.items.*.name'
                 => ['required','string','max:255'],
@@ -111,13 +117,16 @@ class StoreQuotationRequest extends FormRequest
                 => ['nullable','string','max:255'],
 
             'itineraries.*.items.*.duration'
-                => ['nullable','string','max:255'],
+                => ['nullable','numeric','min:1'],
 
             'itineraries.*.items.*.quantity'
                 => ['required','numeric','min:1'],
 
             'itineraries.*.items.*.unit_cost'
                 => ['required','numeric','min:0'],
+
+            'itineraries.*.items.*.price_id'
+                => ['nullable','exists:prices,id'],
 
             'itineraries.*.items.*.unit_price'
                 => ['required','numeric','min:0'],
