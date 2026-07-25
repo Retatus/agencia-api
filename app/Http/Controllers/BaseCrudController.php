@@ -43,6 +43,11 @@ abstract class BaseCrudController extends Controller
      */
     protected int $perPage = 20;
 
+    /**
+     * Llave primaria.
+     */
+    protected string $routeKey = 'id';
+
     /*
     |--------------------------------------------------------------------------
     | INDEX
@@ -150,11 +155,12 @@ abstract class BaseCrudController extends Controller
             'message' => 'Deleted successfully.'
         ]);
     }
-
-    protected function findModel($id)
+ 
+    protected function findModel($value)
     {
         return ($this->model)::query()
             ->with($this->with)
-            ->findOrFail($id);
+            ->where($this->routeKey, $value)
+            ->firstOrFail();
     }
 }

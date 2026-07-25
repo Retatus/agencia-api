@@ -30,6 +30,8 @@ class QuotationController extends BaseCrudController
 
     protected string $updateRequest = UpdateQuotationRequest::class;
 
+    protected string $routeKey = 'uuid';
+
     /**
      * Relaciones que siempre se cargarán.
      */
@@ -39,7 +41,7 @@ class QuotationController extends BaseCrudController
         'priceList',
         'status',
         'passengers.passengerType',
-        'itineraries'
+        'itineraries.items',
     ];
 
     public function __construct(
