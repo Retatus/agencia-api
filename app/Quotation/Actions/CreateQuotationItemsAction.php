@@ -5,6 +5,8 @@ namespace App\Quotation\Actions;
 use App\Quotation\Models\QuotationItinerary;
 use App\Quotation\Models\QuotationItem;
 
+use Illuminate\Support\Str;
+
 class CreateQuotationItemsAction
 {
     public function execute(QuotationItinerary $itinerary, array $items): void 
@@ -16,7 +18,7 @@ class CreateQuotationItemsAction
             $unitPrice = (float) ($item['unit_price'] ?? 0);
 
             QuotationItem::create([
-
+                'uuid' => $item['uuid'] ?? Str::uuid(),
                 'quotation_itinerary_id' => $itinerary->id,
 
                 'service_id'         => $item['service_id'] ?? null,

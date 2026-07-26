@@ -98,6 +98,8 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items' => ['required','array','min:1'],
 
+            'itineraries.*.items.*.uuid' => ['required','uuid'],
+
             'itineraries.*.items.*.service_id'
                 => ['nullable','exists:services,id'],
 
@@ -192,6 +194,9 @@ class StoreQuotationRequest extends FormRequest
             'itineraries.*.items.required' => 'Debe agregar al menos un servicio ok.',
             'itineraries.*.items.array' => 'Los servicios deben ser un arreglo.',
             'itineraries.*.items.min' => 'Debe agregar al menos un servicio.',
+
+            'itineraries.*.items.*.uuid.required' => 'El UUID es obligatorio.',
+            'itineraries.*.items.*.uuid.uuid' => 'El UUID debe ser un UUID.',            
 
             'itineraries.*.items.*.name.required' => 'El nombre es obligatorio.',
             'itineraries.*.items.*.name.string' => 'El nombre debe ser una cadena de texto.',

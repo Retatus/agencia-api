@@ -15,6 +15,7 @@ class QuotationItem extends Model
     protected $table = 'quotation_items';
 
     protected $fillable = [
+        'uuid',
         'quotation_itinerary_id',
         'service_id',
         'service_variant_id',

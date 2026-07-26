@@ -5,6 +5,7 @@ namespace Database\Seeders\Quotation;
 //use App\Models\Service\Service;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\Service;
 
 class QuotationItemSeeder extends Seeder
@@ -24,6 +25,7 @@ class QuotationItemSeeder extends Seeder
             if ($hotel) {
 
                 DB::table('quotation_items')->insert([
+                    'uuid' => Str::uuid(),
                     'quotation_itinerary_id' => $itinerary->id,
                     'service_id' => $hotel->id,
                     'service_variant_id' => null,
@@ -46,6 +48,7 @@ class QuotationItemSeeder extends Seeder
             if ($tour) {
 
                 DB::table('quotation_items')->insert([
+                    'uuid' => Str::uuid(),
                     'quotation_itinerary_id' => $itinerary->id,
                     'service_id' => $tour->id,
                     'service_variant_id' => null,
@@ -69,6 +72,7 @@ class QuotationItemSeeder extends Seeder
             if ($transport) {
 
                 DB::table('quotation_items')->insert([
+                    'uuid' => Str::uuid(),
                     'quotation_itinerary_id' => $itinerary->id,
                     'service_id' => $transport->id,
                     'service_variant_id' => null,
@@ -91,6 +95,7 @@ class QuotationItemSeeder extends Seeder
 
             // Item libre
             DB::table('quotation_items')->insert([
+                'uuid' => Str::uuid(),
                 'quotation_itinerary_id' => $itinerary->id,
                 'service_id' => null,
                 'service_variant_id' => null,
