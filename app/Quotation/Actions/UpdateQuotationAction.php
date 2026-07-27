@@ -8,118 +8,81 @@ use Illuminate\Support\Facades\DB;
 class UpdateQuotationAction
 {
     public function __construct(
-        protected CreateQuotationPassengersAction $passengersAction,
-        protected CreateQuotationItemsAction $itemsAction,
-        protected CalculateQuotationTotalsAction $totalsAction
-    ) {
-    }
+        protected UpdateQuotationHeaderAction $headerAction,
+        protected UpdateQuotationItinerariesAction $itineraryAction,
+        protected UpdateQuotationPassengersAction $passengerAction,
+        protected CalculateQuotationTotalsAction $totalsAction,
+    ) {}
 
-    /**
-     * Actualizar una cotización completa.
-     */
     public function execute(
         Quotation $quotation,
         array $data
     ): Quotation {
-
-        return DB::transaction(function () use (
-            $quotation,
-            $data
-        ) {
+        return DB::transaction(function () use ($quotation, $data) {
 
             /*
             |--------------------------------------------------------------------------
-            | Cabecera
+            | 1. Actualizar cabecera
             |--------------------------------------------------------------------------
             */
 
-            $quotation->update([
-
-                'customer_id' => $data['customer_id'],
-
-                'currency_id' => $data['currency_id'],
-
-                'price_list_id' => $data['price_list_id'],
-
-                'travel_date' => $data['travel_date'],
-
-                'valid_until' => $data['valid_until'],
-
-                'notes' => $data['notes'] ?? null,
-
-            ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Eliminar pasajeros
-            |--------------------------------------------------------------------------
-            */
-
-            $quotation->passengers()->delete();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Crear pasajeros nuevamente
-            |--------------------------------------------------------------------------
-            */
-
-            $this->passengersAction->execute(
+            $quotation = $this->headerAction->execute(
                 $quotation,
-                $data['passengers']
+                $data
             );
 
             /*
             |--------------------------------------------------------------------------
-            | Eliminar servicios
+            | 2. Actualizar itinerarios + items
             |--------------------------------------------------------------------------
             */
 
-            $quotation->items()->delete();
-
-            /*
-            |--------------------------------------------------------------------------
-            | Crear servicios nuevamente
-            |--------------------------------------------------------------------------
-            */
-
-            $this->itemsAction->execute(
+            $this->itineraryAction->execute(
                 $quotation,
-                $data['items']
+                $data['itineraries'] ?? []
             );
 
             /*
             |--------------------------------------------------------------------------
-            | Recalcular totales
+            | 3. Actualizar pasajeros
+            |--------------------------------------------------------------------------
+            */
+
+            $this->passengerAction->execute(
+                $quotation,
+                $data['passengers'] ?? []
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | 4. Recalcular totales
             |--------------------------------------------------------------------------
             */
 
             $quotation = $this->totalsAction->execute(
-                $quotation
+                $quotation->fresh()
             );
 
             /*
             |--------------------------------------------------------------------------
-            | Relaciones
+            | 5. Devolver cotización completa
             |--------------------------------------------------------------------------
             */
 
-            return $quotation->load([
+            return $quotation
+                ->fresh()
+                ->load([
+                    'customer',
+                    'currency',
+                    'priceList',
+                    'status',
 
-                'customer',
+                    'itineraries',
+                    'itineraries.items',
 
-                'currency',
-
-                'priceList',
-
-                'status',
-
-                'passengers.passengerType',
-
-                'items.serviceVariant.service',
-
-                'items.price.priceType',
-
-            ]);
+                    'passengers',
+                    'passengers.passengerType',
+                ]);
         });
     }
 }
