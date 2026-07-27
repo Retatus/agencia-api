@@ -39,6 +39,8 @@ return new class extends Migration
 
             $table->timestamps();
 
+            $table->softDeletes();
+
             $table->index([
                 'quotation_id',
                 'passenger_type_id'

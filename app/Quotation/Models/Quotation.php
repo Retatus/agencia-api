@@ -11,11 +11,14 @@ use App\Models\CRM\Customer;
 use App\Models\PriceList;
 use App\Models\Currency;
 
+use App\Traits\HasHistory;
+
 class Quotation extends Model
 {
     use HasUuids;
     use HasFactory;
     use SoftDeletes;
+    use HasHistory;
 
     protected $table = 'quotations';
 

@@ -3,13 +3,18 @@
 namespace App\Quotation\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 use App\Models\PassengerType;
 
+use App\Traits\HasHistory;
+
 class QuotationPassenger extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+    use HasHistory;
 
     protected $table = 'quotation_passengers';
 

@@ -3,17 +3,19 @@
 namespace App\Quotation\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;  
 
 
-use App\Models\ServiceVariant;
-use App\Models\Price;
+use App\Traits\HasHistory;
 
 class QuotationItinerary extends Model
 {
     use HasUuids;
     use HasFactory;
+    use SoftDeletes;
+    use HasHistory;
 
     protected $table = 'quotation_itineraries';
 
