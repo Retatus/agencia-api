@@ -101,7 +101,8 @@ class CreateQuotationHeaderAction
     {
         $year = now()->year;
 
-        $last = Quotation::whereYear('created_at', $year)
+        $last = Quotation::withTrashed()
+            ->whereYear('created_at', $year)
             ->latest('id')
             ->first();
 

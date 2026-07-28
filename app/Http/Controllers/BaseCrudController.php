@@ -93,13 +93,6 @@ abstract class BaseCrudController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    // public function show(Model $model)
-    // {
-    //     $model->load($this->with);
-
-    //     return new $this->resource($model);
-    // }
-
     public function show($id)
     {
         return new $this->resource(
@@ -147,8 +140,10 @@ abstract class BaseCrudController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    public function destroy(Model $model): JsonResponse
+    public function destroy($id): JsonResponse
     {
+        $model = $this->findModel($id);
+
         $model->delete();
 
         return response()->json([

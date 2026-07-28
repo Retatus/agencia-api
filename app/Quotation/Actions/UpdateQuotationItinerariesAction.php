@@ -72,6 +72,10 @@ class UpdateQuotationItinerariesAction
 
             } else {
 
+                // UUID temporal generado por Vue
+                // no debe persistirse como UUID definitivo
+                unset($itineraryData['uuid']);
+
                 $itinerary = $quotation
                     ->itineraries()
                     ->create(
@@ -148,11 +152,18 @@ class UpdateQuotationItinerariesAction
                     continue;
                 }
 
+                unset($itemData['uuid']);
+
                 $item->update(
                     $itemData
                 );
 
             } else {
+
+                // UUID temporal generado por Vue
+                // no debe persistirse como UUID definitivo
+
+                unset($itemData['uuid']);
 
                 $itinerary->items()->create(
                     $itemData

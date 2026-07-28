@@ -64,6 +64,6 @@ class QuotationItinerary extends Model
 
     public function items()
     {
-        return $this->hasMany(QuotationItem::class);
-    } 
+        return $this->hasMany(QuotationItem::class,'quotation_itinerary_id');
+    }
 }

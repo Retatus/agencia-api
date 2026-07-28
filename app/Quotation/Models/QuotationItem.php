@@ -5,6 +5,7 @@ namespace App\Quotation\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\ServiceVariant;
 use App\Models\Price;
@@ -13,6 +14,7 @@ use App\Traits\HasHistory;
 
 class QuotationItem extends Model
 {
+    use HasUuids;
     use HasFactory;
     use SoftDeletes;
     use HasHistory;
@@ -46,6 +48,26 @@ class QuotationItem extends Model
         'total_cost' => 'decimal:2',
         'total_price' => 'decimal:2',
     ];
+
+    /**
+     * Columnas UUID que Laravel debe generar automáticamente.
+     */
+    public function uniqueIds(): array
+    {
+        return [
+            'uuid',
+        ];
+    }
+
+    /**
+     * Route Model Binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    
 
     /*
     |--------------------------------------------------------------------------
