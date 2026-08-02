@@ -53,7 +53,7 @@ class QuotationItineraryController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'No es posible eliminar el proveedor porque tiene servicios asociados.'
+                'message' => 'No es posible eliminar el itinerario porque tiene servicios asociados.'
             ], Response::HTTP_CONFLICT);
 
         }
@@ -62,7 +62,7 @@ class QuotationItineraryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Proveedor eliminado correctamente.'
+            'message' => 'itinerario eliminado correctamente.'
         ]);
     }
 }
