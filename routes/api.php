@@ -20,6 +20,8 @@ use App\Http\Controllers\CRM\CustomerController;
 use App\Quotation\Http\Controllers\QuotationController;
 use App\Quotation\Http\Controllers\QuotationItineraryController;
 
+use App\Quotation\Http\Controllers\QuotationItemController;
+
 
 
 Route::group([], function () {
@@ -71,7 +73,11 @@ Route::group([], function () {
     // Route::put('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsUpdate'])->name('quotations-itineraries.items.update');
     // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
     
+    Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
+
 });
+
+// El problema está en otro sitio: tu modelo NO está siendo encontrado porque tu namespace no coincide con el que Laravel espera para el Route Model Binding. caso QuotationItem
 
 // El request del archivo debe de contener todos los campos de la entidad para pasar a insertar en la base de datos
 // para entidades que usan uuid en el modelo se debe de referenciar el uuid 

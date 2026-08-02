@@ -12,21 +12,21 @@ trait HasHistory
 {
     /*
     |--------------------------------------------------------------------------
-    | Boot
+    | BOOT
     |--------------------------------------------------------------------------
     */
 
     protected static function bootHasHistory(): void
     {
-        static::created(function ($model) {
+        static::created(function (Model $model) {
             $model->recordCreatedHistory();
         });
 
-        static::updated(function ($model) {
+        static::updated(function (Model $model) {
             $model->recordUpdatedHistory();
         });
 
-        static::deleted(function ($model) {
+        static::deleted(function (Model $model) {
             $model->recordDeletedHistory();
         });
     }
@@ -73,7 +73,7 @@ trait HasHistory
 
     protected function recordUpdatedHistory(): void
     {
-        $changes = $this->getChanges();
+        $changes = $this->getDirty();
 
         if (empty($changes)) {
             return;
@@ -87,6 +87,16 @@ trait HasHistory
 
             $oldValue = $this->getOriginal($field);
 
+            // Evitar registrar cambios que realmente no representan una modificación.
+            if (
+                $this->historyValuesAreEqual(
+                    $oldValue,
+                    $newValue
+                )
+            ) {
+                continue;
+            }
+
             History::create([
                 'batch_uuid' => $this->getHistoryBatchUuid(),
 
@@ -97,8 +107,8 @@ trait HasHistory
                 'field' => $field,
                 'path' => $this->getHistoryPath($field),
 
-                'old_value' => $oldValue,
-                'new_value' => $newValue,
+                'old_value' => $this->normalizeHistoryValue($oldValue),
+                'new_value' => $this->normalizeHistoryValue($newValue),
 
                 'action' => 'updated',
 
@@ -160,7 +170,7 @@ trait HasHistory
         return class_basename($this);
     }
 
-    protected function getHistoryEntityId(): ?int
+    protected function getHistoryEntityId(): mixed
     {
         return $this->getKey();
     }
@@ -174,6 +184,33 @@ trait HasHistory
     |--------------------------------------------------------------------------
     | BATCH
     |--------------------------------------------------------------------------
+    |
+    | Permite agrupar múltiples cambios realizados dentro de
+    | una misma operación.
+    |
+    | Ejemplo:
+    |
+    | Actualizar Cotización
+    |
+    | batch_uuid: ABC-123
+    |
+    |   Quotation
+    |       -> updated
+    |
+    |   QuotationItinerary
+    |       -> created
+    |
+    |   QuotationItem
+    |       -> updated
+    |
+    |   QuotationItem
+    |       -> deleted
+    |
+    |   QuotationPassenger
+    |       -> created
+    |
+    | Todos compartirán el mismo batch_uuid.
+    |
     */
 
     protected function getHistoryBatchUuid(): string
@@ -208,6 +245,76 @@ trait HasHistory
     protected function getHistorySnapshot(): array
     {
         return $this->attributesToArray();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NORMALIZE VALUE
+    |--------------------------------------------------------------------------
+    |
+    | Normaliza valores complejos antes de almacenarlos.
+    |
+    | Si old_value/new_value son TEXT:
+    |
+    | array/object -> JSON
+    |
+    */
+
+    protected function normalizeHistoryValue(
+        mixed $value
+    ): mixed {
+        if ($value === null) {
+            return null;
+        }
+
+        if (
+            is_array($value) ||
+            is_object($value)
+        ) {
+            return json_encode(
+                $value,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
+            );
+        }
+
+        return $value;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | COMPARE VALUES
+    |--------------------------------------------------------------------------
+    |
+    | Evita registrar cambios falsos.
+    |
+    | Ejemplo:
+    |
+    | "100" y 100
+    |
+    | Se consideran equivalentes.
+    |
+    */
+
+    protected function historyValuesAreEqual(
+        mixed $oldValue,
+        mixed $newValue
+    ): bool {
+        
+        // Valores numéricos.
+        if (is_numeric($oldValue) && is_numeric($newValue)
+        ) {
+            return (float) $oldValue === (float) $newValue;
+        }
+
+        // Arrays.
+        if (is_array($oldValue) && is_array($newValue)
+        ) {
+            return $oldValue === $newValue;
+        }
+
+        // Comparación normal.
+        return $oldValue === $newValue;
     }
 
     /*
