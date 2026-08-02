@@ -84,4 +84,12 @@ class QuotationItem extends Model
     {
         return $this->belongsTo(Price::class);
     }
+
+    public function itinerary()
+    {
+        return $this->belongsTo(
+            QuotationItinerary::class,
+            'quotation_itinerary_id'
+        );
+    }
 }
