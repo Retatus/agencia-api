@@ -7,10 +7,48 @@ use App\Quotation\Models\QuotationItinerary;
 
 class UpdateQuotationItinerariesAction
 {
+    public function __construct(
+        protected UpdateQuotationItemsAction $itemAction
+    ) {
+    }
+
+    /**
+     * Actualizar los itinerarios de una cotización.
+     *
+     * Estrategia:
+     *
+     * 1. Itinerario existente:
+     *    UPDATE sobre el mismo registro.
+     *
+     * 2. Itinerario nuevo:
+     *    INSERT.
+     *
+     * 3. Itinerario eliminado del frontend:
+     *    SOFT DELETE.
+     *
+     * 4. Los items se sincronizan mediante
+     *    UpdateQuotationItemsAction.
+     *
+     * 5. Nunca se elimina y recrea un itinerario
+     *    existente para simular una actualización.
+     */
     public function execute(
         Quotation $quotation,
         array $itineraries
     ): void {
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1. Obtener IDs de itinerarios recibidos
+        |--------------------------------------------------------------------------
+        |
+        | Solo los registros existentes tendrán ID.
+        |
+        | Los nuevos registros tendrán:
+        |
+        | id = null
+        |
+        */
 
         $receivedItineraryIds = collect($itineraries)
             ->pluck('id')
@@ -20,40 +58,134 @@ class UpdateQuotationItinerariesAction
 
         /*
         |--------------------------------------------------------------------------
-        | Eliminar itinerarios que ya no existen
+        | 2. Buscar itinerarios eliminados
         |--------------------------------------------------------------------------
+        |
+        | Si un itinerario existe en BD pero ya no viene
+        | desde el frontend, significa que fue eliminado.
+        |
+        | Se realiza SoftDelete.
+        |
         */
 
-        $quotation->itineraries()
+        $itinerariesToDelete = $quotation
+            ->itineraries()
             ->when(
                 !empty($receivedItineraryIds),
                 fn ($query) =>
-                    $query->whereNotIn('id', $receivedItineraryIds)
+                    $query->whereNotIn(
+                        'id',
+                        $receivedItineraryIds
+                    )
             )
             ->when(
                 empty($receivedItineraryIds),
-                fn ($query) => $query
+                fn ($query) =>
+                    $query
             )
-            ->delete();
+            ->get();
+
 
         /*
         |--------------------------------------------------------------------------
-        | Crear / actualizar itinerarios
+        | 3. Eliminar lógicamente itinerarios
+        |--------------------------------------------------------------------------
+        |
+        | Antes de eliminar el itinerario:
+        |
+        | 1. Se eliminan lógicamente sus items.
+        | 2. Cada item dispara HasHistory.
+        | 3. Se elimina lógicamente el itinerario.
+        | 4. El itinerario dispara HasHistory.
+        |
+        */
+
+        foreach ($itinerariesToDelete as $itinerary) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Eliminar items del itinerario
+            |--------------------------------------------------------------------------
+            */
+
+            $itinerary
+                ->items()
+                ->get()
+                ->each(function ($item) {
+
+                    $item->delete();
+                });
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Eliminar itinerario
+            |--------------------------------------------------------------------------
+            */
+
+            $itinerary->delete();
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | 4. Crear / actualizar itinerarios
         |--------------------------------------------------------------------------
         */
 
         foreach ($itineraries as $itineraryData) {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Extraer items
+            |--------------------------------------------------------------------------
+            */
+
             $items = $itineraryData['items'] ?? [];
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Identificador del itinerario
+            |--------------------------------------------------------------------------
+            */
 
             $id = $itineraryData['id'] ?? null;
 
-            unset(
-                $itineraryData['id'],
-                //$itineraryData['uuid'],
-                $itineraryData['quotation_id'],
-                $itineraryData['items']
-            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Datos persistentes del itinerario
+            |--------------------------------------------------------------------------
+            |
+            | No permitimos modificar:
+            |
+            | - id
+            | - uuid
+            | - quotation_id
+            |
+            | Estos valores pertenecen a la identidad
+            | y relación de la entidad.
+            |
+            */
+
+            $data = collect($itineraryData)
+                ->only([
+                    'day_number',
+                    'travel_date',
+                    'title',
+                    'description',
+                    'sort_order',
+                    'subtotal',
+                ])
+                ->toArray();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 5. Actualizar itinerario existente
+            |--------------------------------------------------------------------------
+            */
 
             if ($id) {
 
@@ -61,114 +193,91 @@ class UpdateQuotationItinerariesAction
                     ->itineraries()
                     ->where('id', $id)
                     ->first();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Seguridad
+                |--------------------------------------------------------------------------
+                |
+                | El ID recibido debe pertenecer a esta cotización.
+                |
+                | Nunca debemos actualizar un itinerario
+                | perteneciente a otra cotización.
+                |
+                */
 
                 if (!$itinerary) {
                     continue;
                 }
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | UPDATE
+                |--------------------------------------------------------------------------
+                |
+                | Se mantiene:
+                |
+                | id
+                | uuid
+                | created_at
+                |
+                | Solo se actualizan los campos modificables.
+                |
+                | HasHistory registra automáticamente:
+                |
+                | old_value
+                | new_value
+                | field
+                | action = updated
+                |
+                */
+
                 $itinerary->update(
-                    $itineraryData
+                    $data
                 );
+            }
 
-            } else {
 
-                // UUID temporal generado por Vue
-                // no debe persistirse como UUID definitivo
-                unset($itineraryData['uuid']);
+            /*
+            |--------------------------------------------------------------------------
+            | 6. Crear nuevo itinerario
+            |--------------------------------------------------------------------------
+            |
+            | Solo se ejecuta cuando el frontend envía
+            | un itinerario sin ID.
+            |
+            | Laravel genera el UUID automáticamente
+            | si el modelo utiliza HasUuids.
+            |
+            */
+
+            else {
 
                 $itinerary = $quotation
                     ->itineraries()
                     ->create(
-                        $itineraryData
+                        $data
                     );
             }
 
             /*
             |--------------------------------------------------------------------------
-            | Sincronizar Items
+            | 7. Sincronizar items
             |--------------------------------------------------------------------------
+            |
+            | La responsabilidad de los items está
+            | completamente delegada a:
+            |
+            | UpdateQuotationItemsAction
+            |
             */
 
-            $this->syncItems(
+            $this->itemAction->execute(
                 $itinerary,
                 $items
             );
-        }
-    }
-
-    protected function syncItems(
-        QuotationItinerary $itinerary,
-        array $items
-    ): void {
-
-        $receivedItemIds = collect($items)
-            ->pluck('id')
-            ->filter()
-            ->values()
-            ->all();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Eliminar items que ya no existen
-        |--------------------------------------------------------------------------
-        */
-
-        $itinerary->items()
-            ->when(
-                !empty($receivedItemIds),
-                fn ($query) =>
-                    $query->whereNotIn('id', $receivedItemIds)
-            )
-            ->when(
-                empty($receivedItemIds),
-                fn ($query) => $query
-            )
-            ->delete();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Crear / actualizar items
-        |--------------------------------------------------------------------------
-        */
-
-        foreach ($items as $itemData) {
-
-            $id = $itemData['id'] ?? null;
-
-            unset(
-                $itemData['id'],
-                //$itemData['uuid'],
-                $itemData['quotation_itinerary_id']
-            );
-
-            if ($id) {
-
-                $item = $itinerary
-                    ->items()
-                    ->where('id', $id)
-                    ->first();
-
-                if (!$item) {
-                    continue;
-                }
-
-                unset($itemData['uuid']);
-
-                $item->update(
-                    $itemData
-                );
-
-            } else {
-
-                // UUID temporal generado por Vue
-                // no debe persistirse como UUID definitivo
-
-                unset($itemData['uuid']);
-
-                $itinerary->items()->create(
-                    $itemData
-                );
-            }
         }
     }
 }

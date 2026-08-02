@@ -41,6 +41,8 @@ class UpdateQuotationRequest extends FormRequest
 
             'passengers' => ['required','array','min:1'],
 
+            'passengers.*.id' => ['sometimes','exists:quotation_passengers,id'],
+
             /*
             | UUID generado por frontend.
             |
@@ -82,6 +84,8 @@ class UpdateQuotationRequest extends FormRequest
             */
 
             'itineraries' => ['required','array','min:1'],
+
+            'itineraries.*.id' => ['sometimes','exists:quotation_itineraries,id'],
 
             /*
             | UUID generado por frontend.
@@ -131,6 +135,9 @@ class UpdateQuotationRequest extends FormRequest
             */
 
             'itineraries.*.items' => ['required','array','min:1'],
+
+            'itineraries.*.items.*.id' 
+                => ['sometimes','exists:quotation_items,id'],
 
             /*
             | UUID del item.

@@ -4,6 +4,7 @@ namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class UpdateQuotationAction
 {
@@ -14,75 +15,185 @@ class UpdateQuotationAction
         protected CalculateQuotationTotalsAction $totalsAction,
     ) {}
 
+    /**
+     * Actualizar una cotización existente.
+     *
+     * La actualización se realiza dentro de una única transacción.
+     *
+     * Todas las modificaciones realizadas sobre:
+     *
+     * - Quotation
+     * - QuotationItinerary
+     * - QuotationItem
+     * - QuotationPassenger
+     *
+     * quedan asociadas al mismo batch_uuid para poder reconstruir
+     * una operación completa en el historial.
+     *
+     * Los registros existentes se actualizan utilizando su ID.
+     * Los registros que desaparecen de la petición se eliminan
+     * mediante SoftDelete.
+     *
+     * No se eliminan físicamente ni se recrean registros existentes.
+     */
     public function execute(
         Quotation $quotation,
         array $data
     ): Quotation {
+
         return DB::transaction(function () use ($quotation, $data) {
 
             /*
             |--------------------------------------------------------------------------
-            | 1. Actualizar cabecera
+            | 0. Crear batch de auditoría
             |--------------------------------------------------------------------------
+            |
+            | Todas las acciones ejecutadas durante esta actualización
+            | utilizarán el mismo UUID.
+            |
+            | Ejemplo:
+            |
+            | batch_uuid = abc-123
+            |
+            | Quotation          updated
+            | QuotationItinerary  updated
+            | QuotationItem       deleted
+            | QuotationItem       updated
+            | QuotationPassenger  created
+            |
+            | Esto permite agrupar todos los cambios de una misma operación.
+            |
             */
 
-            $quotation = $this->headerAction->execute(
-                $quotation,
-                $data
+            $batchUuid = (string) Str::uuid();
+
+            app()->instance(
+                'history.batch_uuid',
+                $batchUuid
             );
 
-            /*
-            |--------------------------------------------------------------------------
-            | 2. Actualizar itinerarios + items
-            |--------------------------------------------------------------------------
-            */
+            try {
 
-            $this->itineraryAction->execute(
-                $quotation,
-                $data['itineraries'] ?? []
-            );
+                /*
+                |--------------------------------------------------------------------------
+                | 1. Actualizar cabecera
+                |--------------------------------------------------------------------------
+                |
+                | Solo se actualizan los campos que hayan cambiado.
+                |
+                | El modelo Quotation con HasHistory registrará:
+                |
+                | old_value
+                | new_value
+                | field
+                | action = updated
+                |
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | 3. Actualizar pasajeros
-            |--------------------------------------------------------------------------
-            */
+                $quotation = $this->headerAction->execute(
+                    $quotation,
+                    $data
+                );
 
-            $this->passengerAction->execute(
-                $quotation,
-                $data['passengers'] ?? []
-            );
+                /*
+                |--------------------------------------------------------------------------
+                | 2. Sincronizar itinerarios
+                |--------------------------------------------------------------------------
+                |
+                | La acción debe encargarse de:
+                |
+                | - Actualizar itinerarios existentes por ID.
+                | - Crear únicamente itinerarios realmente nuevos.
+                | - Aplicar SoftDelete a itinerarios eliminados.
+                | - Registrar eliminación en History.
+                | - Sincronizar los items de cada itinerario.
+                |
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | 4. Recalcular totales
-            |--------------------------------------------------------------------------
-            */
+                $this->itineraryAction->execute(
+                    $quotation,
+                    $data['itineraries'] ?? []
+                );
 
-            $quotation = $this->totalsAction->execute(
-                $quotation->fresh()
-            );
+                /*
+                |--------------------------------------------------------------------------
+                | 3. Sincronizar pasajeros
+                |--------------------------------------------------------------------------
+                |
+                | La acción debe:
+                |
+                | - Actualizar pasajeros existentes por ID.
+                | - Crear únicamente pasajeros nuevos.
+                | - Aplicar SoftDelete a pasajeros eliminados.
+                | - Registrar cambios en History.
+                |
+                */
 
-            /*
-            |--------------------------------------------------------------------------
-            | 5. Devolver cotización completa
-            |--------------------------------------------------------------------------
-            */
+                $this->passengerAction->execute(
+                    $quotation,
+                    $data['passengers'] ?? []
+                );
 
-            return $quotation
-                ->fresh()
-                ->load([
-                    'customer',
-                    'currency',
-                    'priceList',
-                    'status',
+                /*
+                |--------------------------------------------------------------------------
+                | 4. Recalcular totales
+                |--------------------------------------------------------------------------
+                |
+                | El cálculo debe ejecutarse después de sincronizar
+                | itinerarios e items.
+                |
+                | Si subtotal, discount, tax o total cambian,
+                | HasHistory registrará también la modificación.
+                |
+                */
 
-                    'itineraries',
-                    'itineraries.items',
+                $quotation = $this->totalsAction->execute(
+                    $quotation
+                );
 
-                    'passengers',
-                    'passengers.passengerType',
-                ]);
+                /*
+                |--------------------------------------------------------------------------
+                | 5. Recargar cotización completa
+                |--------------------------------------------------------------------------
+                |
+                | Se devuelve el estado final de la cotización.
+                |
+                | Los registros eliminados mediante SoftDelete no aparecerán
+                | en las relaciones normales.
+                |
+                */
+
+                return $quotation
+                    ->fresh()
+                    ->load([
+                        'customer',
+                        'currency',
+                        'priceList',
+                        'status',
+
+                        'itineraries',
+                        'itineraries.items',
+
+                        'passengers',
+                        'passengers.passengerType',
+                    ]);
+
+            } finally {
+
+                /*
+                |--------------------------------------------------------------------------
+                | 6. Limpiar contexto de auditoría
+                |--------------------------------------------------------------------------
+                |
+                | Evita que una operación posterior reutilice accidentalmente
+                | el mismo batch_uuid.
+                |
+                */
+
+                app()->forgetInstance(
+                    'history.batch_uuid'
+                );
+            }
         });
     }
 }
