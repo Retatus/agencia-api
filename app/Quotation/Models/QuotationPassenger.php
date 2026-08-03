@@ -5,6 +5,7 @@ namespace App\Quotation\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\PassengerType;
 
@@ -12,6 +13,7 @@ use App\Traits\HasHistory;
 
 class QuotationPassenger extends Model
 {
+    use HasUuids;
     use HasFactory;
     use SoftDeletes;
     use HasHistory;
@@ -19,6 +21,7 @@ class QuotationPassenger extends Model
     protected $table = 'quotation_passengers';
 
     protected $fillable = [
+        'uuid',
         'quotation_id',
         'passenger_type_id',
         'first_name',
@@ -33,6 +36,24 @@ class QuotationPassenger extends Model
     protected $casts = [
         'birth_date' => 'date:Y-m-d',
     ];
+
+    /**
+     * Columnas UUID que Laravel debe generar automáticamente.
+     */
+    public function uniqueIds(): array
+    {
+        return [
+            'uuid',
+        ];
+    }
+
+    /**
+     * Route Model Binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     /*
     |--------------------------------------------------------------------------

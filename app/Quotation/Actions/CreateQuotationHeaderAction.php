@@ -4,7 +4,6 @@ namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
 use App\Quotation\Models\QuotationStatus;
-use Illuminate\Support\Facades\Auth;
 
 class CreateQuotationHeaderAction
 {
@@ -65,8 +64,9 @@ class CreateQuotationHeaderAction
             |--------------------------------------------------------------------------
             | Siempre inician en cero.
             | El CalculateQuotationTotalsAction será el único responsable
-            | de calcularlos.
-            |--------------------------------------------------------------------------
+            | CalculateQuotationTotalsAction será responsable
+            | de calcular los valores definitivos.
+            |
             */
 
             'subtotal' => 0,
@@ -76,13 +76,11 @@ class CreateQuotationHeaderAction
 
             /*
             |--------------------------------------------------------------------------
-            | Auditoría
+            | Estado
             |--------------------------------------------------------------------------
             */
 
-            'user_id' => Auth::id(),
             'active'  => $data['active'] ?? true,
-
         ]);
     }
 
