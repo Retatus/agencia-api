@@ -15,6 +15,8 @@ return new class extends Migration
 
             $table->id();
 
+            $table->uuid('uuid')->unique();
+
             $table->foreignId('quotation_id')
                 ->constrained('quotations')
                 ->cascadeOnDelete();

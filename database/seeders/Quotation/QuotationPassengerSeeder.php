@@ -4,6 +4,7 @@ namespace Database\Seeders\Quotation;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class QuotationPassengerSeeder extends Seeder
 {
@@ -12,6 +13,8 @@ class QuotationPassengerSeeder extends Seeder
         DB::table('quotation_passengers')->insert([
 
             [
+                'uuid' => Str::uuid(),
+
                 'quotation_id' => 1,
 
                 'passenger_type_id' => 1,
@@ -35,6 +38,8 @@ class QuotationPassengerSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
+
                 'quotation_id' => 1,
 
                 'passenger_type_id' => 2,
@@ -58,6 +63,8 @@ class QuotationPassengerSeeder extends Seeder
             ],
 
             [
+                'uuid' => Str::uuid(),
+
                 'quotation_id' => 2,
 
                 'passenger_type_id' => 1,
