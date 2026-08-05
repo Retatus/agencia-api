@@ -18,76 +18,82 @@ class UpdateQuotationAction
     /**
      * Actualizar una cotización existente.
      *
-     * La actualización se realiza dentro de una única transacción.
+     * Toda la operación comparte:
      *
-     * Todas las modificaciones realizadas sobre:
+     * - batch_uuid
+     * - root_entity_type
+     * - root_entity_uuid
      *
-     * - Quotation
-     * - QuotationItinerary
-     * - QuotationItem
-     * - QuotationPassenger
+     * Esto permite agrupar todos los cambios generados
+     * durante una misma operación de actualización.
      *
-     * quedan asociadas al mismo batch_uuid para poder reconstruir
-     * una operación completa en el historial.
+     * Ejemplo:
      *
-     * Los registros existentes se actualizan utilizando su ID.
-     * Los registros que desaparecen de la petición se eliminan
-     * mediante SoftDelete.
+     * Quotation
+     * ├── updated
+     * ├── QuotationItinerary updated
+     * ├── QuotationItem updated
+     * ├── QuotationItem deleted
+     * ├── QuotationItem created
+     * └── QuotationPassenger updated
      *
-     * No se eliminan físicamente ni se recrean registros existentes.
+     * Todos tendrán:
+     *
+     * batch_uuid = mismo UUID
+     *
+     * root_entity_type = Quotation
+     *
+     * root_entity_uuid = UUID de la cotización
      */
-    public function execute(
-        Quotation $quotation,
-        array $data
-    ): Quotation {
-
+    public function execute( Quotation $quotation, array $data): Quotation
+    {
         return DB::transaction(function () use ($quotation, $data) {
 
             /*
             |--------------------------------------------------------------------------
-            | 0. Crear batch de auditoría
+            | 1. Crear identificador de la operación
             |--------------------------------------------------------------------------
             |
-            | Todas las acciones ejecutadas durante esta actualización
-            | utilizarán el mismo UUID.
-            |
-            | Ejemplo:
-            |
-            | batch_uuid = abc-123
-            |
-            | Quotation          updated
-            | QuotationItinerary  updated
-            | QuotationItem       deleted
-            | QuotationItem       updated
-            | QuotationPassenger  created
-            |
-            | Esto permite agrupar todos los cambios de una misma operación.
+            | Este UUID identifica exclusivamente esta operación
+            | de actualización.
             |
             */
 
             $batchUuid = (string) Str::uuid();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2. Registrar contexto de auditoría
+            |--------------------------------------------------------------------------
+            |
+            | root_entity_uuid ya existe porque estamos actualizando
+            | una cotización existente.
+            |
+            */
 
             app()->instance(
                 'history.batch_uuid',
                 $batchUuid
             );
 
+            app()->instance(
+                'history.root_entity_type',
+                'Quotation'
+            );
+
+            app()->instance(
+                'history.root_entity_uuid',
+                $quotation->uuid
+            );
+
+
             try {
 
                 /*
                 |--------------------------------------------------------------------------
-                | 1. Actualizar cabecera
+                | 3. Actualizar cabecera
                 |--------------------------------------------------------------------------
-                |
-                | Solo se actualizan los campos que hayan cambiado.
-                |
-                | El modelo Quotation con HasHistory registrará:
-                |
-                | old_value
-                | new_value
-                | field
-                | action = updated
-                |
                 */
 
                 $quotation = $this->headerAction->execute(
@@ -95,18 +101,22 @@ class UpdateQuotationAction
                     $data
                 );
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | 2. Sincronizar itinerarios
+                | 4. Sincronizar itinerarios + items
                 |--------------------------------------------------------------------------
                 |
-                | La acción debe encargarse de:
+                | Esta acción debe:
                 |
-                | - Actualizar itinerarios existentes por ID.
-                | - Crear únicamente itinerarios realmente nuevos.
-                | - Aplicar SoftDelete a itinerarios eliminados.
-                | - Registrar eliminación en History.
-                | - Sincronizar los items de cada itinerario.
+                | - Actualizar registros existentes.
+                | - Crear únicamente registros realmente nuevos.
+                | - Aplicar SoftDelete a registros eliminados.
+                |
+                | Todos los cambios utilizarán el mismo:
+                |
+                | batch_uuid
+                | root_entity_uuid
                 |
                 */
 
@@ -115,18 +125,11 @@ class UpdateQuotationAction
                     $data['itineraries'] ?? []
                 );
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | 3. Sincronizar pasajeros
+                | 5. Sincronizar pasajeros
                 |--------------------------------------------------------------------------
-                |
-                | La acción debe:
-                |
-                | - Actualizar pasajeros existentes por ID.
-                | - Crear únicamente pasajeros nuevos.
-                | - Aplicar SoftDelete a pasajeros eliminados.
-                | - Registrar cambios en History.
-                |
                 */
 
                 $this->passengerAction->execute(
@@ -134,16 +137,18 @@ class UpdateQuotationAction
                     $data['passengers'] ?? []
                 );
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | 4. Recalcular totales
+                | 6. Recalcular totales
                 |--------------------------------------------------------------------------
                 |
-                | El cálculo debe ejecutarse después de sincronizar
-                | itinerarios e items.
+                | Si los totales cambian, HasHistory registrará:
                 |
-                | Si subtotal, discount, tax o total cambian,
-                | HasHistory registrará también la modificación.
+                | action = updated
+                |
+                | old_value = valor anterior
+                | new_value = valor nuevo
                 |
                 */
 
@@ -151,16 +156,11 @@ class UpdateQuotationAction
                     $quotation
                 );
 
+
                 /*
                 |--------------------------------------------------------------------------
-                | 5. Recargar cotización completa
+                | 7. Recargar cotización completa
                 |--------------------------------------------------------------------------
-                |
-                | Se devuelve el estado final de la cotización.
-                |
-                | Los registros eliminados mediante SoftDelete no aparecerán
-                | en las relaciones normales.
-                |
                 */
 
                 return $quotation
@@ -182,16 +182,24 @@ class UpdateQuotationAction
 
                 /*
                 |--------------------------------------------------------------------------
-                | 6. Limpiar contexto de auditoría
+                | 8. Limpiar contexto de auditoría
                 |--------------------------------------------------------------------------
                 |
-                | Evita que una operación posterior reutilice accidentalmente
-                | el mismo batch_uuid.
+                | Evita que otra operación reutilice accidentalmente
+                | el mismo contexto.
                 |
                 */
 
                 app()->forgetInstance(
                     'history.batch_uuid'
+                );
+
+                app()->forgetInstance(
+                    'history.root_entity_type'
+                );
+
+                app()->forgetInstance(
+                    'history.root_entity_uuid'
                 );
             }
         });

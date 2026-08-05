@@ -22,6 +22,8 @@ use App\Quotation\Http\Controllers\QuotationItineraryController;
 
 use App\Quotation\Http\Controllers\QuotationItemController;
 
+use App\Audit\Http\Controllers\HistoryController;
+
 
 
 Route::group([], function () {
@@ -74,6 +76,10 @@ Route::group([], function () {
     // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
+
+    Route::prefix('audit')->group(function () {
+        Route::get('history',[HistoryController::class, 'index']);
+    });
 
 });
 

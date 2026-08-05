@@ -6,27 +6,26 @@ use App\Audit\Models\History;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Model;
 
 trait HasHistory
 {
     /*
     |--------------------------------------------------------------------------
-    | BOOT
+    | Boot
     |--------------------------------------------------------------------------
     */
 
     protected static function bootHasHistory(): void
     {
-        static::created(function (Model $model) {
+        static::created(function ($model) {
             $model->recordCreatedHistory();
         });
 
-        static::updated(function (Model $model) {
+        static::updated(function ($model) {
             $model->recordUpdatedHistory();
         });
 
-        static::deleted(function (Model $model) {
+        static::deleted(function ($model) {
             $model->recordDeletedHistory();
         });
     }
@@ -40,11 +39,38 @@ trait HasHistory
     protected function recordCreatedHistory(): void
     {
         History::create([
+            /*
+            |------------------------------------------------------------------
+            | Operation
+            |------------------------------------------------------------------
+            */
+
             'batch_uuid' => $this->getHistoryBatchUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Root Entity
+            |------------------------------------------------------------------
+            */
+
+            'root_entity_type' => $this->getHistoryRootEntityType(),
+            'root_entity_uuid' => $this->getHistoryRootEntityUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Entity
+            |------------------------------------------------------------------
+            */
 
             'entity_type' => $this->getHistoryEntityType(),
             'entity_id' => $this->getHistoryEntityId(),
             'entity_uuid' => $this->getHistoryEntityUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Change
+            |------------------------------------------------------------------
+            */
 
             'field' => null,
             'path' => null,
@@ -54,7 +80,19 @@ trait HasHistory
 
             'action' => 'created',
 
+            /*
+            |------------------------------------------------------------------
+            | User
+            |------------------------------------------------------------------
+            */
+
             'user_id' => Auth::id(),
+
+            /*
+            |------------------------------------------------------------------
+            | Additional Information
+            |------------------------------------------------------------------
+            */
 
             'description' => $this->getHistoryDescription(
                 'created'
@@ -71,9 +109,10 @@ trait HasHistory
     |--------------------------------------------------------------------------
     */
 
+    
     protected function recordUpdatedHistory(): void
     {
-        $changes = $this->getDirty();
+        $changes = $this->getChanges();
 
         if (empty($changes)) {
             return;
@@ -87,32 +126,91 @@ trait HasHistory
 
             $oldValue = $this->getOriginal($field);
 
-            // Evitar registrar cambios que realmente no representan una modificación.
+            /*
+            |--------------------------------------------------------------------------
+            | Comparación normalizada
+            |--------------------------------------------------------------------------
+            |
+            | Evita registrar falsos cambios como:
+            |
+            | "0.00" vs 0
+            | "2.00"  vs 2
+            | "10.50" vs 10.5
+            |
+            */
+
             if (
                 $this->historyValuesAreEqual(
                     $oldValue,
-                    $newValue
+                    $newValue,
+                    $field
                 )
             ) {
                 continue;
             }
 
             History::create([
+                /*
+                |--------------------------------------------------------------------------
+                | Operation
+                |--------------------------------------------------------------------------
+                */
+
                 'batch_uuid' => $this->getHistoryBatchUuid(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Root Entity
+                |--------------------------------------------------------------------------
+                */
+
+                'root_entity_type' => $this->getHistoryRootEntityType(),
+                'root_entity_uuid' => $this->getHistoryRootEntityUuid(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Entity
+                |--------------------------------------------------------------------------
+                */
 
                 'entity_type' => $this->getHistoryEntityType(),
                 'entity_id' => $this->getHistoryEntityId(),
                 'entity_uuid' => $this->getHistoryEntityUuid(),
 
+                /*
+                |--------------------------------------------------------------------------
+                | Change
+                |--------------------------------------------------------------------------
+                */
+
                 'field' => $field,
                 'path' => $this->getHistoryPath($field),
 
-                'old_value' => $this->normalizeHistoryValue($oldValue),
-                'new_value' => $this->normalizeHistoryValue($newValue),
+                'old_value' => $this->normalizeHistoryValue(
+                    $oldValue,
+                    $field
+                ),
+
+                'new_value' => $this->normalizeHistoryValue(
+                    $newValue,
+                    $field
+                ),
 
                 'action' => 'updated',
 
+                /*
+                |--------------------------------------------------------------------------
+                | User
+                |--------------------------------------------------------------------------
+                */
+
                 'user_id' => Auth::id(),
+
+                /*
+                |--------------------------------------------------------------------------
+                | Additional Information
+                |--------------------------------------------------------------------------
+                */
 
                 'description' => $this->getHistoryDescription(
                     'updated',
@@ -125,6 +223,117 @@ trait HasHistory
         }
     }
 
+    protected function historyValuesAreEqual(
+        mixed $oldValue,
+        mixed $newValue,
+        string $field
+    ): bool {
+        /*
+        |--------------------------------------------------------------------------
+        | Obtener tipo de cast del modelo
+        |--------------------------------------------------------------------------
+        */
+
+        $castType = $this->getCasts()[$field] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Campos decimales
+        |--------------------------------------------------------------------------
+        |
+        | Laravel puede tener:
+        |
+        | "2.00"
+        | 2
+        | 2.0
+        |
+        | Todos representan el mismo valor.
+        |
+        */
+
+        if (
+            $castType &&
+            str_starts_with($castType, 'decimal')
+        ) {
+            return bccomp(
+                (string) $oldValue,
+                (string) $newValue,
+                $this->getDecimalScale($castType)
+            ) === 0;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Valores numéricos
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            is_numeric($oldValue) &&
+            is_numeric($newValue)
+        ) {
+            return (float) $oldValue === (float) $newValue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Valores normales
+        |--------------------------------------------------------------------------
+        */
+
+        return $oldValue === $newValue;
+    }
+
+    protected function normalizeHistoryValue(
+        mixed $value,
+        string $field
+    ): mixed {
+        $castType = $this->getCasts()[$field] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Decimal
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $castType &&
+            str_starts_with($castType, 'decimal')
+        ) {
+            return number_format(
+                (float) $value,
+                $this->getDecimalScale($castType),
+                '.',
+                ''
+            );
+        }
+
+        return $value;
+    }
+
+    protected function getDecimalScale(
+        string $castType
+    ): int {
+        /*
+        | Ejemplo:
+        |
+        | decimal:2
+        |         ↑
+        |         escala
+        */
+
+        if (
+            !str_contains($castType, ':')
+        ) {
+            return 2;
+        }
+
+        return (int) explode(
+            ':',
+            $castType
+        )[1];
+    }
+
     /*
     |--------------------------------------------------------------------------
     | DELETED
@@ -134,11 +343,38 @@ trait HasHistory
     protected function recordDeletedHistory(): void
     {
         History::create([
+            /*
+            |------------------------------------------------------------------
+            | Operation
+            |------------------------------------------------------------------
+            */
+
             'batch_uuid' => $this->getHistoryBatchUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Root Entity
+            |------------------------------------------------------------------
+            */
+
+            'root_entity_type' => $this->getHistoryRootEntityType(),
+            'root_entity_uuid' => $this->getHistoryRootEntityUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Entity
+            |------------------------------------------------------------------
+            */
 
             'entity_type' => $this->getHistoryEntityType(),
             'entity_id' => $this->getHistoryEntityId(),
             'entity_uuid' => $this->getHistoryEntityUuid(),
+
+            /*
+            |------------------------------------------------------------------
+            | Change
+            |------------------------------------------------------------------
+            */
 
             'field' => null,
             'path' => null,
@@ -148,7 +384,19 @@ trait HasHistory
 
             'action' => 'deleted',
 
+            /*
+            |------------------------------------------------------------------
+            | User
+            |------------------------------------------------------------------
+            */
+
             'user_id' => Auth::id(),
+
+            /*
+            |------------------------------------------------------------------
+            | Additional Information
+            |------------------------------------------------------------------
+            */
 
             'description' => $this->getHistoryDescription(
                 'deleted'
@@ -157,6 +405,34 @@ trait HasHistory
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
         ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ROOT ENTITY
+    |--------------------------------------------------------------------------
+    */
+
+    protected function getHistoryRootEntityType(): ?string
+    {
+        if (
+            app()->bound('history.root_entity_type')
+        ) {
+            return app('history.root_entity_type');
+        }
+
+        return null;
+    }
+
+    protected function getHistoryRootEntityUuid(): ?string
+    {
+        if (
+            app()->bound('history.root_entity_uuid')
+        ) {
+            return app('history.root_entity_uuid');
+        }
+
+        return null;
     }
 
     /*
@@ -170,7 +446,7 @@ trait HasHistory
         return class_basename($this);
     }
 
-    protected function getHistoryEntityId(): mixed
+    protected function getHistoryEntityId(): ?int
     {
         return $this->getKey();
     }
@@ -184,40 +460,26 @@ trait HasHistory
     |--------------------------------------------------------------------------
     | BATCH
     |--------------------------------------------------------------------------
-    |
-    | Permite agrupar múltiples cambios realizados dentro de
-    | una misma operación.
-    |
-    | Ejemplo:
-    |
-    | Actualizar Cotización
-    |
-    | batch_uuid: ABC-123
-    |
-    |   Quotation
-    |       -> updated
-    |
-    |   QuotationItinerary
-    |       -> created
-    |
-    |   QuotationItem
-    |       -> updated
-    |
-    |   QuotationItem
-    |       -> deleted
-    |
-    |   QuotationPassenger
-    |       -> created
-    |
-    | Todos compartirán el mismo batch_uuid.
-    |
     */
 
     protected function getHistoryBatchUuid(): string
     {
-        if (app()->bound('history.batch_uuid')) {
+        if (
+            app()->bound('history.batch_uuid')
+        ) {
             return app('history.batch_uuid');
         }
+
+        /*
+        |----------------------------------------------------------------------
+        | Operación independiente
+        |----------------------------------------------------------------------
+        |
+        | Si no existe un batch definido explícitamente, se genera uno nuevo.
+        | Esto permite que operaciones simples sigan teniendo su propio
+        | identificador de operación.
+        |
+        */
 
         return (string) Str::uuid();
     }
@@ -245,76 +507,6 @@ trait HasHistory
     protected function getHistorySnapshot(): array
     {
         return $this->attributesToArray();
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | NORMALIZE VALUE
-    |--------------------------------------------------------------------------
-    |
-    | Normaliza valores complejos antes de almacenarlos.
-    |
-    | Si old_value/new_value son TEXT:
-    |
-    | array/object -> JSON
-    |
-    */
-
-    protected function normalizeHistoryValue(
-        mixed $value
-    ): mixed {
-        if ($value === null) {
-            return null;
-        }
-
-        if (
-            is_array($value) ||
-            is_object($value)
-        ) {
-            return json_encode(
-                $value,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES
-            );
-        }
-
-        return $value;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | COMPARE VALUES
-    |--------------------------------------------------------------------------
-    |
-    | Evita registrar cambios falsos.
-    |
-    | Ejemplo:
-    |
-    | "100" y 100
-    |
-    | Se consideran equivalentes.
-    |
-    */
-
-    protected function historyValuesAreEqual(
-        mixed $oldValue,
-        mixed $newValue
-    ): bool {
-        
-        // Valores numéricos.
-        if (is_numeric($oldValue) && is_numeric($newValue)
-        ) {
-            return (float) $oldValue === (float) $newValue;
-        }
-
-        // Arrays.
-        if (is_array($oldValue) && is_array($newValue)
-        ) {
-            return $oldValue === $newValue;
-        }
-
-        // Comparación normal.
-        return $oldValue === $newValue;
     }
 
     /*

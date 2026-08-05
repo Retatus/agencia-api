@@ -2,8 +2,8 @@
 
 namespace App\Audit\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class History extends Model
@@ -12,6 +12,9 @@ class History extends Model
 
     protected $fillable = [
         'batch_uuid',
+        
+        'root_entity_type',
+        'root_entity_uuid',
 
         'entity_type',
         'entity_id',
@@ -33,8 +36,12 @@ class History extends Model
     ];
 
     protected $casts = [
-        'old_value' => 'json',
-        'new_value' => 'json',
+        'old_value' => 'array',
+        'new_value' => 'array',
+        'entity_id' => 'integer',
+        'user_id' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /*
@@ -48,9 +55,6 @@ class History extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(
-            User::class,
-            'user_id'
-        );
+        return $this->belongsTo(User::class,'user_id');
     }
 }

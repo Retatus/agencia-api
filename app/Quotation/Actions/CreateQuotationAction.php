@@ -18,18 +18,20 @@ class CreateQuotationAction
     /**
      * Crear una nueva cotización.
      *
-     * Toda la creación se ejecuta dentro de una única transacción
-     * y todos los registros creados durante la operación comparten
-     * el mismo batch_uuid.
+     * Toda la operación comparte:
      *
-     * Esto permite agrupar en auditoría:
+     * - batch_uuid
+     * - root_entity_type
+     * - root_entity_uuid
      *
+     * Esto permite agrupar todos los registros de auditoría
+     * *
      * - Quotation
      * - QuotationItinerary
      * - QuotationItem
      * - QuotationPassenger
      *
-     * como una única operación de negocio.
+     * generados durante la creación de la cotización.
      */
     public function execute(array $data): Quotation
     {
@@ -37,58 +39,64 @@ class CreateQuotationAction
 
             /*
             |--------------------------------------------------------------------------
-            | 0. Crear batch de auditoría
+            | 1. Identificadores de la operación
             |--------------------------------------------------------------------------
-            |
-            | Este UUID identifica toda la operación de creación.
-            |
-            | Todos los eventos HasHistory generados durante esta transacción
-            | utilizarán este mismo batch_uuid.
-            |
             */
 
+            $quotationUuid = (string) Str::uuid();
+
             $batchUuid = (string) Str::uuid();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | 2. Registrar contexto de auditoría
+            |--------------------------------------------------------------------------
+            */
 
             app()->instance(
                 'history.batch_uuid',
                 $batchUuid
             );
 
+            app()->instance(
+                'history.root_entity_type',
+                'Quotation'
+            );
+
+            app()->instance(
+                'history.root_entity_uuid',
+                $quotationUuid
+            );
+
+
             try {
 
                 /*
                 |--------------------------------------------------------------------------
-                | 1. Crear cabecera
+                | 3. Crear cabecera
                 |--------------------------------------------------------------------------
                 |
-                | HasHistory:
+                | La cotización ya tiene UUID antes de ser creada.
                 |
-                | Quotation
-                | action = created
-                | batch_uuid = $batchUuid
+                | Por tanto, el evento "created" de HasHistory tendrá:
+                |
+                | batch_uuid
+                | root_entity_type
+                | root_entity_uuid
                 |
                 */
 
                 $quotation = $this->headerAction->execute(
-                    $data
+                    $data,
+                    $quotationUuid
                 );
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | 2. Crear itinerarios + items
+                | 4. Crear itinerarios + items
                 |--------------------------------------------------------------------------
-                |
-                | HasHistory registrará:
-                |
-                | QuotationItinerary
-                | action = created
-                | batch_uuid = $batchUuid
-                |
-                | QuotationItem
-                | action = created
-                | batch_uuid = $batchUuid
-                |
                 */
 
                 $this->itineraryAction->execute(
@@ -99,15 +107,8 @@ class CreateQuotationAction
 
                 /*
                 |--------------------------------------------------------------------------
-                | 3. Crear pasajeros
+                | 5. Crear pasajeros
                 |--------------------------------------------------------------------------
-                |
-                | HasHistory registrará:
-                |
-                | QuotationPassenger
-                | action = created
-                | batch_uuid = $batchUuid
-                |
                 */
 
                 $this->passengerAction->execute(
@@ -118,13 +119,8 @@ class CreateQuotationAction
 
                 /*
                 |--------------------------------------------------------------------------
-                | 4. Calcular totales
+                | 6. Calcular totales
                 |--------------------------------------------------------------------------
-                |
-                | Si el cálculo modifica los totales de la cotización,
-                | HasHistory registrará esos cambios utilizando el mismo
-                | batch_uuid.
-                |
                 */
 
                 $quotation = $this->totalsAction->execute(
@@ -134,7 +130,7 @@ class CreateQuotationAction
 
                 /*
                 |--------------------------------------------------------------------------
-                | 5. Recargar cotización completa
+                | 7. Recargar cotización completa
                 |--------------------------------------------------------------------------
                 */
 
@@ -157,16 +153,20 @@ class CreateQuotationAction
 
                 /*
                 |--------------------------------------------------------------------------
-                | 6. Limpiar contexto de auditoría
+                | 8. Limpiar contexto de auditoría
                 |--------------------------------------------------------------------------
-                |
-                | Evita que el batch_uuid se reutilice accidentalmente
-                | en una operación posterior dentro del mismo request.
-                |
                 */
 
                 app()->forgetInstance(
                     'history.batch_uuid'
+                );
+
+                app()->forgetInstance(
+                    'history.root_entity_type'
+                );
+
+                app()->forgetInstance(
+                    'history.root_entity_uuid'
                 );
             }
         });

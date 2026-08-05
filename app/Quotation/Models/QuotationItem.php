@@ -39,14 +39,21 @@ class QuotationItem extends Model
         'sort_order',
         'notes',
         'active',
-    ];
+    ];  
 
     protected $casts = [
         'service_date' => 'date',
+
+        'quantity' => 'decimal:2',
+
         'unit_cost' => 'decimal:2',
         'unit_price' => 'decimal:2',
+        'subtotal' => 'decimal:2',
+
         'total_cost' => 'decimal:2',
         'total_price' => 'decimal:2',
+
+        'active' => 'boolean',
     ];
 
     /**
