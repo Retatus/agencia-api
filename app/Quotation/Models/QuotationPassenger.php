@@ -70,4 +70,20 @@ class QuotationPassenger extends Model
     {
         return $this->belongsTo(PassengerType::class);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | History, Audit devuelve el root entity quotation
+    |--------------------------------------------------------------------------
+    */
+
+    protected function getHistoryRootEntityType(): string
+    {
+        return 'Quotation';
+    }
+
+    protected function getHistoryRootEntityUuid(): ?string
+    {
+        return $this->quotation?->uuid;
+    }
 }

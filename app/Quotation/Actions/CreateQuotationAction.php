@@ -42,9 +42,6 @@ class CreateQuotationAction
             | 1. Identificadores de la operación
             |--------------------------------------------------------------------------
             */
-
-            $quotationUuid = (string) Str::uuid();
-
             $batchUuid = (string) Str::uuid();
 
 
@@ -58,17 +55,6 @@ class CreateQuotationAction
                 'history.batch_uuid',
                 $batchUuid
             );
-
-            app()->instance(
-                'history.root_entity_type',
-                'Quotation'
-            );
-
-            app()->instance(
-                'history.root_entity_uuid',
-                $quotationUuid
-            );
-
 
             try {
 
@@ -89,7 +75,6 @@ class CreateQuotationAction
 
                 $quotation = $this->headerAction->execute(
                     $data,
-                    $quotationUuid
                 );
 
 
@@ -159,14 +144,6 @@ class CreateQuotationAction
 
                 app()->forgetInstance(
                     'history.batch_uuid'
-                );
-
-                app()->forgetInstance(
-                    'history.root_entity_type'
-                );
-
-                app()->forgetInstance(
-                    'history.root_entity_uuid'
                 );
             }
         });

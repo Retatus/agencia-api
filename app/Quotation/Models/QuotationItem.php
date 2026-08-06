@@ -99,4 +99,29 @@ class QuotationItem extends Model
             'quotation_itinerary_id'
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | History, Audit devuelve el root entity quotation
+    |--------------------------------------------------------------------------
+    */
+
+    protected function getHistoryRootEntityType(): string
+    {
+        return 'Quotation';
+    }
+
+    protected function getHistoryRootEntityUuid(): ?string
+    {
+        return $this->resolveRootEntity()?->uuid;
+    }
+
+    protected function resolveRootEntity(): ?Quotation
+    {
+        return $this->quotationRoot ??=
+            $this->itinerary()
+                ->with('quotation:id,uuid')
+                ->first()
+                ?->quotation;
+    }
 }

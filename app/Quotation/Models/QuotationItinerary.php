@@ -66,4 +66,20 @@ class QuotationItinerary extends Model
     {
         return $this->hasMany(QuotationItem::class,'quotation_itinerary_id');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | History, Audit devuelve el root entity quotation
+    |--------------------------------------------------------------------------
+    */
+
+    protected function getHistoryRootEntityType(): string
+    {
+        return 'Quotation';
+    }
+
+    protected function getHistoryRootEntityUuid(): ?string
+    {
+        return $this->quotation?->uuid;
+    }
 }

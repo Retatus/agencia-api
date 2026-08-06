@@ -77,17 +77,6 @@ class UpdateQuotationAction
                 $batchUuid
             );
 
-            app()->instance(
-                'history.root_entity_type',
-                'Quotation'
-            );
-
-            app()->instance(
-                'history.root_entity_uuid',
-                $quotation->uuid
-            );
-
-
             try {
 
                 /*
@@ -192,14 +181,6 @@ class UpdateQuotationAction
 
                 app()->forgetInstance(
                     'history.batch_uuid'
-                );
-
-                app()->forgetInstance(
-                    'history.root_entity_type'
-                );
-
-                app()->forgetInstance(
-                    'history.root_entity_uuid'
                 );
             }
         });
