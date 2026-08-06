@@ -413,26 +413,14 @@ trait HasHistory
     |--------------------------------------------------------------------------
     */
 
-    protected function getHistoryRootEntityType(): ?string
+    protected function getHistoryRootEntityType(): string
     {
-        if (
-            app()->bound('history.root_entity_type')
-        ) {
-            return app('history.root_entity_type');
-        }
-
-        return null;
+        return $this->getHistoryEntityType();
     }
 
     protected function getHistoryRootEntityUuid(): ?string
     {
-        if (
-            app()->bound('history.root_entity_uuid')
-        ) {
-            return app('history.root_entity_uuid');
-        }
-
-        return null;
+        return $this->getHistoryEntityUuid();
     }
 
     /*
