@@ -5,54 +5,35 @@ namespace App\Quotation\Calculation\Services;
 class RoomAllocator
 {
     /**
-     * Sugerir una distribución de habitaciones.
-     *
-     * Criterios actuales:
-     *
-     * 1. Cubrir a todos los pasajeros.
-     * 2. Minimizar capacidad sobrante.
-     * 3. En caso de empate, minimizar cantidad de habitaciones.
-     *
-     * Esta clase NO consulta base de datos.
-     * Trabaja únicamente con los tipos de habitación recibidos.
+     * Obtener las mejores distribuciones posibles.
      *
      * @param array $passengers
      * @param array $roomTypes
+     * @param int $limit
      *
      * @return array
      */
-    public function allocate(
+    public function recommend(
         array $passengers,
-        array $roomTypes
+        array $roomTypes,
+        int $limit = 5
     ): array {
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cantidad de pasajeros
-        |--------------------------------------------------------------------------
-        */
 
         $passengerCount = count($passengers);
 
-        if ($passengerCount === 0) {
-            return [];
-        }
-
-        if (empty($roomTypes)) {
+        if ($passengerCount === 0 || empty($roomTypes)) {
             return [];
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Normalizar tipos de habitación
+        | Normalizar habitaciones
         |--------------------------------------------------------------------------
         */
 
         $rooms = collect($roomTypes)
             ->map(function ($room) {
-
                 return [
-
                     'id' =>
                         $room['id'] ?? null,
 
@@ -66,62 +47,31 @@ class RoomAllocator
                         ?? 'Habitación',
 
                     'min_capacity' =>
-                        (int) (
-                            $room['min_capacity']
-                            ?? 1
-                        ),
+                        (int) ($room['min_capacity'] ?? 1),
 
                     'max_capacity' =>
-                        (int) (
-                            $room['max_capacity']
-                            ?? 1
-                        ),
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Valores económicos
-                    |--------------------------------------------------------------------------
-                    */
+                        (int) ($room['max_capacity'] ?? 1),
 
                     'unit_cost' =>
                         (float) (
                             $room['unit_cost']
+                            ?? $room['cost']
                             ?? 0
                         ),
 
                     'unit_price' =>
                         (float) (
                             $room['unit_price']
+                            ?? $room['sale_price']
                             ?? 0
                         ),
                 ];
             })
-
-            /*
-            |--------------------------------------------------------------------------
-            | Eliminar habitaciones inválidas
-            |--------------------------------------------------------------------------
-            */
-
             ->filter(
-                fn ($room) =>
-                    $room['max_capacity'] > 0
+                fn ($room) => $room['max_capacity'] > 0
             )
-
-            /*
-            |--------------------------------------------------------------------------
-            | Ordenar por mayor capacidad
-            |--------------------------------------------------------------------------
-            |
-            | Esto ayuda a encontrar rápidamente combinaciones razonables,
-            | aunque igualmente evaluamos todas las combinaciones posibles.
-            |
-            */
-
             ->sortByDesc('max_capacity')
-
             ->values()
-
             ->all();
 
         if (empty($rooms)) {
@@ -130,214 +80,174 @@ class RoomAllocator
 
         /*
         |--------------------------------------------------------------------------
-        | Buscar mejor combinación
+        | Generar combinaciones
         |--------------------------------------------------------------------------
         */
 
-        $bestCombination = null;
+        $combinations = [];
 
         $this->search(
             rooms: $rooms,
             remainingPassengers: $passengerCount,
+            passengerCount: $passengerCount,
             index: 0,
             currentCombination: [],
-            bestCombination: $bestCombination
+            combinations: $combinations
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Sin combinación posible
+        | Eliminar combinaciones duplicadas
         |--------------------------------------------------------------------------
         */
 
-        if ($bestCombination === null) {
-            return [];
-        }
+        $combinations = $this->uniqueCombinations(
+            $combinations
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | Formatear resultado
+        | Ordenar de mejor a peor
         |--------------------------------------------------------------------------
         */
 
-        return collect(
-            $bestCombination['rooms']
-        )
-            ->map(function ($allocation) {
+        usort(
+            $combinations,
+            fn ($a, $b) => $this->compare($a, $b)
+        );
 
-                $room = $allocation['room'];
+        /*
+        |--------------------------------------------------------------------------
+        | Limitar cantidad de recomendaciones
+        |--------------------------------------------------------------------------
+        */
 
-                $quantity =
-                    (int) $allocation['quantity'];
+        $combinations = array_slice(
+            $combinations,
+            0,
+            $limit
+        );
 
-                $unitCost =
-                    (float) $room['unit_cost'];
+        /*
+        |--------------------------------------------------------------------------
+        | Ranking
+        |--------------------------------------------------------------------------
+        */
 
-                $unitPrice =
-                    (float) $room['unit_price'];
-
-                return [
-
-                    'service_variant_id' =>
-                        $room['service_variant_id'],
-
-                    'name' =>
-                        $room['name'],
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Habitaciones
-                    |--------------------------------------------------------------------------
-                    */
-
-                    'quantity' =>
-                        $quantity,
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Capacidad
-                    |--------------------------------------------------------------------------
-                    */
-
-                    'capacity_per_room' =>
-                        $room['max_capacity'],
-
-                    'total_capacity' =>
-                        $quantity
-                        * $room['max_capacity'],
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Precio unitario
-                    |--------------------------------------------------------------------------
-                    */
-
-                    'unit_cost' =>
-                        $unitCost,
-
-                    'unit_price' =>
-                        $unitPrice,
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Subtotales
-                    |--------------------------------------------------------------------------
-                    */
-
-                    'subtotal_cost' =>
-                        $quantity
-                        * $unitCost,
-
-                    'subtotal_sale' =>
-                        $quantity
-                        * $unitPrice,
-                ];
-            })
+        return collect($combinations)
             ->values()
+            ->map(function ($combination, $index) {
+
+                $combination['rank'] =
+                    $index + 1;
+
+                $combination['recommended'] =
+                    $index === 0;
+
+                return $combination;
+            })
             ->all();
     }
 
     /**
-     * Buscar recursivamente todas las combinaciones posibles.
+     * Buscar recursivamente combinaciones posibles.
      */
     protected function search(
         array $rooms,
         int $remainingPassengers,
+        int $passengerCount,
         int $index,
         array $currentCombination,
-        ?array &$bestCombination
+        array &$combinations
     ): void {
 
         /*
         |--------------------------------------------------------------------------
-        | Todos los pasajeros están cubiertos
+        | Combinación válida
         |--------------------------------------------------------------------------
-        |
-        | remainingPassengers puede ser:
-        |
-        |  0 = capacidad exacta
-        | -1 = sobra 1 plaza
-        | -2 = sobran 2 plazas
-        |
         */
 
         if ($remainingPassengers <= 0) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Capacidad total
-            |--------------------------------------------------------------------------
-            */
+            $totalCapacity = collect($currentCombination)
+                ->sum(
+                    fn ($allocation) =>
+                        $allocation['quantity']
+                        * $allocation['room']['max_capacity']
+                );
 
-            $totalCapacity =
-                collect($currentCombination)
-                    ->sum(
-                        fn ($allocation) =>
-                            $allocation['quantity']
-                            * $allocation['room']['max_capacity']
-                    );
+            $totalRooms = collect($currentCombination)
+                ->sum('quantity');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Cantidad total de habitaciones
-            |--------------------------------------------------------------------------
-            */
+            $totalCost = collect($currentCombination)
+                ->sum(
+                    fn ($allocation) =>
+                        $allocation['quantity']
+                        * $allocation['room']['unit_cost']
+                );
 
-            $totalRooms =
-                collect($currentCombination)
-                    ->sum('quantity');
-
-            /*
-            |--------------------------------------------------------------------------
-            | Capacidad sobrante
-            |--------------------------------------------------------------------------
-            */
+            $totalSale = collect($currentCombination)
+                ->sum(
+                    fn ($allocation) =>
+                        $allocation['quantity']
+                        * $allocation['room']['unit_price']
+                );
 
             $unusedCapacity =
-                abs($remainingPassengers);
+                $totalCapacity - $passengerCount;
 
             /*
             |--------------------------------------------------------------------------
-            | Costo total
-            |--------------------------------------------------------------------------
-            |
-            | Todavía NO lo usamos para elegir la mejor combinación,
-            | pero lo calculamos porque nos servirá en el siguiente paso.
-            |
-            */
-
-            $totalCost =
-                collect($currentCombination)
-                    ->sum(
-                        fn ($allocation) =>
-                            $allocation['quantity']
-                            * $allocation['room']['unit_cost']
-                    );
-
-            /*
-            |--------------------------------------------------------------------------
-            | Venta total
+            | Detalle de habitaciones
             |--------------------------------------------------------------------------
             */
 
-            $totalSale =
-                collect($currentCombination)
-                    ->sum(
-                        fn ($allocation) =>
-                            $allocation['quantity']
-                            * $allocation['room']['unit_price']
-                    );
+            $roomAllocation = collect($currentCombination)
+                ->map(function ($allocation) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | Candidato
-            |--------------------------------------------------------------------------
-            */
+                    $room = $allocation['room'];
 
-            $candidate = [
+                    $quantity =
+                        (int) $allocation['quantity'];
 
+                    return [
+                        'service_variant_id' =>
+                            $room['service_variant_id'],
+
+                        'name' =>
+                            $room['name'],
+
+                        'quantity' =>
+                            $quantity,
+
+                        'capacity_per_room' =>
+                            $room['max_capacity'],
+
+                        'total_capacity' =>
+                            $quantity
+                            * $room['max_capacity'],
+
+                        'unit_cost' =>
+                            $room['unit_cost'],
+
+                        'unit_price' =>
+                            $room['unit_price'],
+
+                        'subtotal_cost' =>
+                            $quantity
+                            * $room['unit_cost'],
+
+                        'subtotal_sale' =>
+                            $quantity
+                            * $room['unit_price'],
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $combinations[] = [
                 'rooms' =>
-                    $currentCombination,
+                    $roomAllocation,
 
                 'total_capacity' =>
                     $totalCapacity,
@@ -355,30 +265,12 @@ class RoomAllocator
                     $totalSale,
             ];
 
-            /*
-            |--------------------------------------------------------------------------
-            | Comparar con mejor combinación
-            |--------------------------------------------------------------------------
-            */
-
-            if (
-                $bestCombination === null
-                || $this->isBetter(
-                    $candidate,
-                    $bestCombination
-                )
-            ) {
-
-                $bestCombination =
-                    $candidate;
-            }
-
             return;
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Ya no quedan tipos de habitación
+        | Fin de tipos disponibles
         |--------------------------------------------------------------------------
         */
 
@@ -386,40 +278,23 @@ class RoomAllocator
             return;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Habitación actual
-        |--------------------------------------------------------------------------
-        */
-
         $room = $rooms[$index];
 
-        $capacity =
-            $room['max_capacity'];
+        $capacity = $room['max_capacity'];
 
         /*
         |--------------------------------------------------------------------------
-        | Máxima cantidad necesaria
+        | Máximo necesario de este tipo
         |--------------------------------------------------------------------------
-        |
-        | Ejemplo:
-        |
-        | 7 pasajeros
-        | habitación triple
-        |
-        | ceil(7 / 3) = 3
-        |
         */
 
-        $maxQuantity =
-            (int) ceil(
-                $remainingPassengers
-                / $capacity
-            );
+        $maxQuantity = (int) ceil(
+            $remainingPassengers / $capacity
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | Probar todas las cantidades posibles
+        | Explorar cantidades
         |--------------------------------------------------------------------------
         */
 
@@ -432,48 +307,22 @@ class RoomAllocator
             $nextCombination =
                 $currentCombination;
 
-            /*
-            |--------------------------------------------------------------------------
-            | Agregar habitación
-            |--------------------------------------------------------------------------
-            */
-
             if ($quantity > 0) {
-
                 $nextCombination[] = [
-
-                    'room' =>
-                        $room,
-
-                    'quantity' =>
-                        $quantity,
+                    'room' => $room,
+                    'quantity' => $quantity,
                 ];
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Pasajeros cubiertos
-            |--------------------------------------------------------------------------
-            */
-
-            $covered =
-                $quantity
-                * $capacity;
-
-            /*
-            |--------------------------------------------------------------------------
-            | Continuar búsqueda
-            |--------------------------------------------------------------------------
-            */
-
             $this->search(
-
-                rooms:
-                    $rooms,
+                rooms: $rooms,
 
                 remainingPassengers:
                     $remainingPassengers
-                    - $covered,
+                    - ($quantity * $capacity),
+
+                passengerCount:
+                    $passengerCount,
 
                 index:
                     $index + 1,
@@ -481,95 +330,88 @@ class RoomAllocator
                 currentCombination:
                     $nextCombination,
 
-                bestCombination:
-                    $bestCombination
+                combinations:
+                    $combinations
             );
         }
     }
 
     /**
-     * Determinar si una combinación es mejor que otra.
-     *
-     * Criterios actuales:
-     *
-     * 1. Menor capacidad sobrante.
-     * 2. Menor cantidad de habitaciones.
-     *
-     * En el siguiente paso podremos agregar:
-     *
-     * 3. Menor costo.
+     * Ordenar de mejor a peor.
      */
+    protected function compare(
+        array $a,
+        array $b
+    ): int {
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1. Menor capacidad sobrante
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $a['unused_capacity']
+            !== $b['unused_capacity']
+        ) {
+            return
+                $a['unused_capacity']
+                <=> $b['unused_capacity'];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2. Menor costo
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $a['total_cost']
+            !== $b['total_cost']
+        ) {
+            return
+                $a['total_cost']
+                <=> $b['total_cost'];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Menor cantidad de habitaciones
+        |--------------------------------------------------------------------------
+        */
+
+        return
+            $a['total_rooms']
+            <=> $b['total_rooms'];
+    }
+
     /**
-   * Determinar si una combinación es mejor que otra.
-   *
-   * Prioridades:
-   *
-   * 1. Menor capacidad sobrante.
-   * 2. Menor costo total.
-   * 3. Menor cantidad de habitaciones.
-   */
-  protected function isBetter(
-      array $candidate,
-      array $currentBest
-  ): bool {
+     * Eliminar distribuciones equivalentes.
+     */
+    protected function uniqueCombinations(
+        array $combinations
+    ): array {
 
-      /*
-      |--------------------------------------------------------------------------
-      | 1. Menor capacidad sobrante
-      |--------------------------------------------------------------------------
-      */
+        $unique = [];
 
-      if (
-          $candidate['unused_capacity']
-          < $currentBest['unused_capacity']
-      ) {
-          return true;
-      }
+        foreach ($combinations as $combination) {
 
-      if (
-          $candidate['unused_capacity']
-          > $currentBest['unused_capacity']
-      ) {
-          return false;
-      }
+            $parts = collect($combination['rooms'])
+                ->sortBy('service_variant_id')
+                ->map(
+                    fn ($room) =>
+                        $room['service_variant_id']
+                        . ':'
+                        . $room['quantity']
+                )
+                ->values()
+                ->all();
 
-      /*
-      |--------------------------------------------------------------------------
-      | 2. Menor costo
-      |--------------------------------------------------------------------------
-      |
-      | Llegamos aquí cuando ambas combinaciones tienen
-      | exactamente la misma capacidad sobrante.
-      |
-      */
+            $key = implode('|', $parts);
 
-      if (
-          $candidate['total_cost']
-          < $currentBest['total_cost']
-      ) {
-          return true;
-      }
+            $unique[$key] = $combination;
+        }
 
-      if (
-          $candidate['total_cost']
-          > $currentBest['total_cost']
-      ) {
-          return false;
-      }
-
-      /*
-      |--------------------------------------------------------------------------
-      | 3. Menor cantidad de habitaciones
-      |--------------------------------------------------------------------------
-      */
-
-      if (
-          $candidate['total_rooms']
-          < $currentBest['total_rooms']
-      ) {
-          return true;
-      }
-
-      return false;
-  }
+        return array_values($unique);
+    }
 }
