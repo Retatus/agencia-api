@@ -17,6 +17,9 @@ use App\Quotation\Actions\UpdateQuotationAction;
 
 use Illuminate\Http\JsonResponse;
 
+use App\Quotation\Calculation\Actions\CalculateQuotationAction;
+use Illuminate\Http\Request;
+
 
 class QuotationController extends BaseCrudController
 {
@@ -78,6 +81,21 @@ class QuotationController extends BaseCrudController
         return response()->json([
             'message' => 'Cotización actualizada correctamente.',
             'data' => new QuotationResource($quotation),
+        ]);
+    }
+
+    public function calculate(
+        Request $request,
+        CalculateQuotationAction $action
+    ): JsonResponse
+    {
+        $result = $action->execute(
+            $request->all()
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
         ]);
     }
 }
