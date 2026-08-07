@@ -158,6 +158,22 @@ class UpdateQuotationRequest extends FormRequest
             'itineraries.*.items.*.item_type' 
                 => ['required','in:CATALOG,CUSTOM'],
 
+            'itineraries.*.items.*.calculation_type' => [
+                'nullable',
+                'string',
+                'in:generic,accommodation,transport',
+            ],
+
+            'itineraries.*.items.*.group_uuid' => [
+                'nullable',
+                'uuid',
+            ],
+
+            'itineraries.*.items.*.group_index' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
             'itineraries.*.items.*.name' 
                 => ['required','string','max:255',
             ],

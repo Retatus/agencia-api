@@ -50,6 +50,45 @@ return new class extends Migration
                 'CUSTOM'
             ])->default('CATALOG');
 
+             /*
+            |--------------------------------------------------------------------------
+            | Tipo de cálculo
+            |--------------------------------------------------------------------------
+            |
+            | generic
+            | accommodation
+            | transport
+            |
+            */
+
+            $table->string('calculation_type', 30)
+                ->default('generic');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Agrupación lógica
+            |--------------------------------------------------------------------------
+            |
+            | null:
+            | item normal
+            |
+            | uuid:
+            | pertenece a un servicio compuesto
+            |
+            */
+
+            $table->uuid('group_uuid')
+                ->nullable();
+            
+            /*
+            |--------------------------------------------------------------------------
+            | Orden interno del grupo
+            |--------------------------------------------------------------------------
+            */
+
+            $table->unsignedSmallInteger('group_index')
+                ->nullable();
+
             // Snapshot del nombre del servicio
             $table->string('name', 200);
 
@@ -114,7 +153,7 @@ return new class extends Migration
 
             $table->index([
                 'quotation_itinerary_id',
-                'sort_order'
+                'sort_order',
             ]);
 
             $table->index('item_type');
@@ -124,6 +163,20 @@ return new class extends Migration
             $table->index('service_variant_id');
 
             $table->index('active');
+
+             $table->index(
+                'group_uuid',
+                'idx_quotation_items_group_uuid'
+            );
+
+            $table->index(
+                [
+                    'quotation_itinerary_id',
+                    'group_uuid',
+                    'group_index',
+                ],
+                'idx_quotation_items_group'
+            );
         });
     }
 

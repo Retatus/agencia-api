@@ -27,6 +27,11 @@ class QuotationItem extends Model
         'service_id',
         'service_variant_id',
         'item_type',
+
+        'calculation_type',
+        'group_uuid',
+        'group_index',
+
         'name',
         'variant_name',
         'description',
@@ -42,18 +47,23 @@ class QuotationItem extends Model
     ];  
 
     protected $casts = [
-        'service_date' => 'date',
+        'duration' => 'integer',
 
         'quantity' => 'decimal:2',
 
         'unit_cost' => 'decimal:2',
+
         'unit_price' => 'decimal:2',
+
         'subtotal' => 'decimal:2',
 
-        'total_cost' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'group_index' => 'integer',
+
+        'sort_order' => 'integer',
 
         'active' => 'boolean',
+
+        'calculated_at' => 'datetime',
     ];
 
     /**
@@ -99,7 +109,32 @@ class QuotationItem extends Model
             'quotation_itinerary_id'
         );
     }
+    
+     /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
 
+    public function isGrouped(): bool
+    {
+        return ! empty(
+            $this->group_uuid
+        );
+    }
+
+    public function isAccommodation(): bool
+    {
+        return $this->calculation_type ===
+            'accommodation';
+    }
+
+    public function isTransport(): bool
+    {
+        return $this->calculation_type ===
+            'transport';
+    }
+    
     /*
     |--------------------------------------------------------------------------
     | History, Audit devuelve el root entity quotation
