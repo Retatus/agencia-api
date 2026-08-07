@@ -78,42 +78,12 @@ Route::group([], function () {
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
 
     Route::prefix('audit')->group(function () {
-        Route::get('history',[HistoryController::class, 'index']);
+        Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
 
+    //   const response = await api.get(`/api/v1/audit/history/${uuid}`, {
+  //     params,
+  //   })
+
+    
 });
-
-// El problema está en otro sitio: tu modelo NO está siendo encontrado porque tu namespace no coincide con el que Laravel espera para el Route Model Binding. caso QuotationItem
-
-// El request del archivo debe de contener todos los campos de la entidad para pasar a insertar en la base de datos
-// para entidades que usan uuid en el modelo se debe de referenciar el uuid 
-// use Illuminate\Database\Eloquent\Concerns\HasUuids;
-// use HasUuids;
-// public function uniqueIds(): array
-// {
-//     return ['uuid'];
-// }
-
-// public function getRouteKeyName(): string
-// {
-//     return 'uuid';
-// }
-
-// php artisan serve --port=8001
-
-// php artisan make:model PassengerType
-// php artisan make:controller Api/PassengerTypeController --api
-// php artisan make:request PassengerType/StorePassengertTypeRequest
-// php artisan make:request PassengerType/UpdatePassengertTypeRequest
-// php artisan make:resource PassengerTypeResource
-
-// php artisan route:list --path=api
-
- /**
-  * agregar las propiedades del modelo, id, name, code, description, active
-  * modificar los metodos del contoller, index, store, show, update, destroy
-  * agregar los request, StorePassengerTypeRequest, UpdatePassengerTypeRequest (authorize = true, rules, messages)
-  * Para un request de actualizacion en el path validar con sometimes y no con required, para que no sea obligatorio enviar todos los campos
-  * agregar el resource, PassengerTypeResource
-  * agregar las rutas en api.php
-  */

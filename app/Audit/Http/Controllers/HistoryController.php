@@ -23,9 +23,12 @@ class HistoryController extends Controller
      * Ejemplo:
      * GET /api/v1/audit/history?entity_type=Quotation&entity_uuid=xxxx
      */
-    public function index(
+    public function index($uuid,
         Request $request
     ): AnonymousResourceCollection {
+        $request->merge([
+            'entity_uuid' => $uuid,
+        ]);
         $request->validate([
             'entity_type' => ['required', 'string'],
             'entity_uuid' => ['required', 'uuid'],
