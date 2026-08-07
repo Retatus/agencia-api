@@ -2,33 +2,33 @@
 
 namespace App\Quotation\Calculation\Engines;
 
-use App\Quotation\Calculation\Contracts\CalculatorInterface;
 use App\Quotation\Calculation\DTOs\CalculationRequest;
+use App\Quotation\Calculation\Factories\CalculatorFactory;
 
 class QuotationCalculationEngine
 {
     public function __construct(
-        protected CalculatorInterface $calculator
+        protected CalculatorFactory $calculatorFactory
     ) {
     }
 
-    /**
-     * Ejecuta el cálculo de todos los items de la cotización.
-     */
-    public function calculate(CalculationRequest $request): array
-    {
+    public function calculate(
+        CalculationRequest $request
+    ): array {
         $results = [];
 
         foreach ($request->itineraries() as $itinerary) {
 
             foreach ($itinerary['items'] ?? [] as $item) {
 
-                $results[] = $this->calculator->calculate(
+                $calculator = $this->calculatorFactory->make(
                     $item
                 );
 
+                $results[] = $calculator->calculate(
+                    $item
+                );
             }
-
         }
 
         return $results;

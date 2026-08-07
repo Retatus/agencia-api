@@ -62,7 +62,7 @@ Route::group([], function () {
     // Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
     // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
     // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
-
+    Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
     Route::prefix('quotations')->group(function () {
         Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
     });
