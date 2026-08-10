@@ -47,6 +47,7 @@ Route::group([], function () {
 
     Route::prefix('pricing')->group(function () {
         Route::apiResource('price-lists', PriceListController::class);
+        Route::patch('prices/bulk', [PriceController::class, 'bulkUpdate']);
         Route::apiResource('prices', PriceController::class);
         Route::apiResource('price-types', PriceTypeController::class);
     });

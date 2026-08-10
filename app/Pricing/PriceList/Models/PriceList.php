@@ -5,6 +5,7 @@ namespace App\Pricing\PriceList\Models;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\Currency;
 use App\Pricing\Price\Models\Price;
@@ -12,6 +13,7 @@ use App\Pricing\Price\Models\Price;
 class PriceList extends Model
 {
     use HasActiveScope;
+    use HasUuids;
 
     protected $table = 'price_lists';
 
@@ -36,6 +38,20 @@ class PriceList extends Model
         'created_at',
         'updated_at',
     ];
+
+    /**
+     * Indica qué columnas deben generarse automáticamente como UUID.
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
 
     /*
     |--------------------------------------------------------------------------

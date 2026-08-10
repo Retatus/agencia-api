@@ -78,4 +78,61 @@ class UpdateProviderRequest extends FormRequest
             'active.boolean' => 'El campo activo debe ser verdadero o falso.',
         ];
     }
+
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+
+                $documentTypeId = $this->input('document_type_id');
+                $documentNumber = $this->input('document_number');
+
+                /*
+                |--------------------------------------------------------------------------
+                | DNI
+                |--------------------------------------------------------------------------
+                */
+
+                if ($documentTypeId == 1) {
+
+                    if (
+                        !preg_match(
+                            '/^\d{8}$/',
+                            $documentNumber
+                        )
+                    ) {
+                        $validator
+                            ->errors()
+                            ->add(
+                                'document_number',
+                                'El DNI debe contener exactamente 8 dígitos.'
+                            );
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | RUC
+                |--------------------------------------------------------------------------
+                */
+
+                if ($documentTypeId == 2) {
+
+                    if (
+                        !preg_match(
+                            '/^\d{11}$/',
+                            $documentNumber
+                        )
+                    ) {
+                        $validator
+                            ->errors()
+                            ->add(
+                                'document_number',
+                                'El RUC debe contener exactamente 11 dígitos.'
+                            );
+                    }
+                }
+            },
+        ];
+    }
 }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\ServiceVariant;
-use App\Models\Price;
+use App\Pricing\Price\Models\Price;
 
 use App\Traits\HasHistory;
 

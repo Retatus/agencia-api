@@ -4,6 +4,8 @@ namespace App\Pricing\Price\Controllers;
 
 use App\Filters\Pricing\PriceFilter;
 use App\Http\Controllers\Controller;
+use App\Pricing\Price\Actions\BulkUpdatePricesAction;
+use App\Pricing\Price\Requests\BulkUpdatePricesRequest;
 use App\Pricing\Price\Requests\StorePriceRequest;
 use App\Pricing\Price\Requests\UpdatePriceRequest;
 use App\Pricing\Price\Resources\PriceResource;
@@ -89,5 +91,14 @@ class PriceController extends Controller
             'success' => true,
             'message' => 'Precio eliminado correctamente.'
         ], Response::HTTP_OK);
+    }
+
+    public function bulkUpdate(BulkUpdatePricesRequest $request, BulkUpdatePricesAction $action) 
+    {
+        $prices = $action->execute(
+            $request->validated()['prices']
+        );
+
+        return PriceResource::collection($prices);
     }
 }
