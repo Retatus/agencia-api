@@ -93,11 +93,17 @@ class PriceController extends Controller
         ], Response::HTTP_OK);
     }
 
-    public function bulkUpdate(BulkUpdatePricesRequest $request, BulkUpdatePricesAction $action) 
+    public function bulkUpdate(BulkUpdatePricesRequest $request, BulkUpdatePricesAction $action)
     {
         $prices = $action->execute(
             $request->validated()['prices']
         );
+
+        if (is_array($prices)) {
+            $prices = new \Illuminate\Database\Eloquent\Collection($prices);
+        }
+
+        $prices->load($this->relations);
 
         return PriceResource::collection($prices);
     }
