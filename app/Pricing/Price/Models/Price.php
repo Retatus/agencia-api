@@ -1,10 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Pricing\Price\Models;
 
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+use App\Pricing\PriceList\Models\PriceList;
+use App\Pricing\PriceType\Models\PriceType;
+use App\Models\PassengerType;
+use App\Models\ServiceVariant;
 
 class Price extends Model
 {

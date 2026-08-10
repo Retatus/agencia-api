@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Pricing;
+namespace App\Pricing\Price\Controllers;
 
 use App\Filters\Pricing\PriceFilter;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Pricing\Price\StorePriceRequest;
-use App\Http\Requests\Pricing\Price\UpdatePriceRequest;
-use App\Http\Resources\Pricing\PriceResource;
-use App\Models\Price;
+use App\Pricing\Price\Requests\StorePriceRequest;
+use App\Pricing\Price\Requests\UpdatePriceRequest;
+use App\Pricing\Price\Resources\PriceResource;
+use App\Pricing\Price\Models\Price;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

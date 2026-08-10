@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Pricing\PriceList;
+namespace App\Pricing\PriceList\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePriceListRequest extends FormRequest
+class UpdatePriceListRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

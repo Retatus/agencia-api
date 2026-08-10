@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\CRM\Customer;
-use App\Models\PriceList;
+use App\Pricing\PriceList\Models\PriceList;
 use App\Models\Currency;
 
 use App\Traits\HasHistory;

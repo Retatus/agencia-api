@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Models;
+namespace App\Pricing\PriceType\Models;
 
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Pricing\Price\Models\Price;
 
 class PriceType extends Model
 {

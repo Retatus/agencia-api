@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\Pricing\PriceType;
+namespace App\Pricing\PriceType\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources\Pricing;
+namespace App\Pricing\PriceType\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PriceListResource extends JsonResource
+class PriceTypeResource extends JsonResource
 {
     /**
      * Transform the resource into an array.

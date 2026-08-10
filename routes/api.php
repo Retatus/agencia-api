@@ -11,9 +11,9 @@ use App\Http\Controllers\Catalog\ServiceController;
 use App\Http\Controllers\Catalog\ServiceVariantController;
 use App\Http\Controllers\Catalog\ProviderController;
 
-use App\Http\Controllers\Pricing\PriceController;
-use App\Http\Controllers\Pricing\PriceListController;
-use App\Http\Controllers\Pricing\PriceTypeController;
+use App\Pricing\Price\Controllers\PriceController;
+use App\Pricing\PriceList\Controllers\PriceListController;
+use App\Pricing\PriceType\Controllers\PriceTypeController;
 
 use App\Http\Controllers\CRM\CustomerController;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Pricing\Price;
+namespace App\Pricing\Price\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePriceRequest extends FormRequest
+class UpdatePriceRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,7 +21,7 @@ class StorePriceRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [          
+        return [
             'price_list_id' => 'required|exists:price_lists,id',
             'service_variant_id' => 'required|exists:service_variants,id',
             'price_type_id' => 'required|exists:price_types,id',

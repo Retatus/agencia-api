@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Pricing;
+namespace App\Pricing\PriceList\Controllers;
 
 use App\Filters\Pricing\PriceListFilter;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Pricing\PriceList\StorePriceListRequest;
-use App\Http\Requests\Pricing\PriceList\UpdatePriceListRequest;
-use App\Http\Resources\Pricing\PriceListResource;
-use App\Models\PriceList;
+use App\Pricing\PriceList\Requests\StorePriceListRequest;
+use App\Pricing\PriceList\Requests\UpdatePriceListRequest;
+use App\Pricing\PriceList\Resources\PriceListResource;
+use App\Pricing\PriceList\Models\PriceList;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
