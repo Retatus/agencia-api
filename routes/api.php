@@ -22,6 +22,7 @@ use App\Quotation\Http\Controllers\QuotationItineraryController;
 use App\Quotation\Http\Controllers\QuotationStatusController;
 
 use App\Quotation\Http\Controllers\QuotationItemController;
+use App\Quotation\Http\Controllers\QuotationPassengerController;
 
 use App\Audit\Http\Controllers\HistoryController;
 
@@ -65,7 +66,12 @@ Route::group([], function () {
     // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
     // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
-    Route::get('quotation/statuses', [QuotationStatusController::class, 'index']);
+    Route::get('quotations/statuses', [QuotationStatusController::class, 'index']);
+    Route::prefix('quotations/{quotation:uuid}')->group(function () {
+        Route::post('passengers/generate', [QuotationPassengerController::class, 'generate']);
+        Route::patch('passengers/bulk', [QuotationPassengerController::class, 'bulkUpdate']);
+        Route::get('passengers', [QuotationPassengerController::class, 'index']);
+    });
     Route::prefix('quotations')->group(function () {
         Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
     });
