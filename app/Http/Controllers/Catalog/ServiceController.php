@@ -21,6 +21,7 @@ class ServiceController extends Controller
         ]);
         
         $query = Service::query()->with([
+            'variants',
             'provider' => function ($q) {
                 $q->select('id', 'uuid', 'code', 'business_name');
             },
