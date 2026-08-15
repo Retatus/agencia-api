@@ -7,25 +7,36 @@ use App\Http\Requests\Catalog\ServiceVariant\StoreServiceVariantRequest;
 use App\Http\Requests\Catalog\ServiceVariant\UpdateServiceVariantRequest;
 use App\Http\Resources\Catalog\ServiceVariantResource;
 use App\Models\ServiceVariant;
+use App\Models\Service;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ServiceVariantController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, Service $service) 
     {
         $request->validate([
             'search'   => 'nullable|string|max:100',
             'active'   => 'nullable|boolean',
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
-        
-        $query = ServiceVariant::query();
-    
+
+        $query = $service->variants();
+
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('code', 'like', "%{$request->search}%")
-                ->orWhere('name', 'like', "%{$request->search}%");
+            $search = $request->input('search');
+
+            $query->where(function ($q) use ($search) {
+                $q->where(
+                    'code',
+                    'like',
+                    "%{$search}%"
+                )
+                ->orWhere(
+                    'name',
+                    'like',
+                    "%{$search}%"
+                );
             });
         }
 
