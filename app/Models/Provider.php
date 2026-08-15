@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\HasHistory;
 
 class Provider extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasHistory;
 
     protected $table = 'providers';
 

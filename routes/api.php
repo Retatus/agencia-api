@@ -44,6 +44,15 @@ Route::group([], function () {
     Route::apiResource('services', ServiceController::class);
     
     Route::apiResource('service-variants', ServiceVariantController::class);
+    // Catalog / Services / Variants
+    Route::prefix('catalog/services/{service:uuid}/variants')->group(function () {
+        Route::get('/', [ServiceVariantController::class, 'index']);
+        Route::post('/', [ServiceVariantController::class, 'store']);
+        Route::get('/{variant}', [ServiceVariantController::class, 'show']);
+        Route::put('/{variant}', [ServiceVariantController::class, 'update']);
+        Route::delete('/{variant}', [ServiceVariantController::class, 'destroy']);
+    }); 
+
     Route::get('providers/select', [ProviderController::class, 'select']);
     Route::apiResource('providers', ProviderController::class);
 
@@ -90,9 +99,6 @@ Route::group([], function () {
         Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
 
-    //   const response = await api.get(`/api/v1/audit/history/${uuid}`, {
-  //     params,
-  //   })
-
     
+       
 });
