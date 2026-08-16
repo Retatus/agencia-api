@@ -26,6 +26,8 @@ use App\Quotation\Http\Controllers\QuotationPassengerController;
 
 use App\Audit\Http\Controllers\HistoryController;
 
+use App\Pricing\BasePrice\Controllers\BasePriceController;
+use App\Pricing\PriceListItem\Controllers\PriceListItemController;
 
 
 Route::group([], function () {
@@ -57,10 +59,48 @@ Route::group([], function () {
     Route::apiResource('providers', ProviderController::class);
 
     Route::prefix('pricing')->group(function () {
+
+    /*
+        |--------------------------------------------------------------------------
+        | PRICE LIST ITEMS
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('price-lists/{priceList:uuid}/items',[PriceListItemController::class, 'index']);
+        Route::post('price-lists/{priceList:uuid}/items',[PriceListItemController::class, 'store']);
+        Route::put('price-lists/{priceList:uuid}/items/{item}',[PriceListItemController::class, 'update']);
+        Route::delete('price-lists/{priceList:uuid}/items/{item}',[PriceListItemController::class, 'destroy']);
+        
+        /*
+        |--------------------------------------------------------------------------
+        | PRICE LISTS
+        |--------------------------------------------------------------------------
+        */
+
         Route::apiResource('price-lists', PriceListController::class);
+
+        /*
+        |--------------------------------------------------------------------------
+        | PRICES LEGACY / ACTUAL
+        |--------------------------------------------------------------------------
+        */
+
         Route::patch('prices/bulk', [PriceController::class, 'bulkUpdate']);
         Route::apiResource('prices', PriceController::class);
+
         Route::apiResource('price-types', PriceTypeController::class);
+
+        /*
+        |--------------------------------------------------------------------------
+        | BASE PRICE
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get('service-variants/{variant}/base-price',[BasePriceController::class, 'show']);
+        Route::post('service-variants/{variant}/base-price',[BasePriceController::class, 'store']);
+        Route::put('service-variants/{variant}/base-price',[BasePriceController::class, 'update']);
+        Route::delete('service-variants/{variant}/base-price',[BasePriceController::class, 'destroy']);
+        
     });
 
     // no afecta en dada el echo de agregar customer:uuid en las rutas
@@ -68,12 +108,6 @@ Route::group([], function () {
         Route::apiResource('customers', CustomerController::class);
     });
 
-    // Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
-    // Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
-    // Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
-    // Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
     Route::get('quotations/statuses', [QuotationStatusController::class, 'index']);
     Route::prefix('quotations/{quotation:uuid}')->group(function () {
@@ -88,10 +122,6 @@ Route::group([], function () {
     Route::prefix('quotations-itineraries')->group(function () {
         Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
     });
-    // Route::get('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'items'])->name('quotations-itineraries.items');
-    // Route::post('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'itemsStore'])->name('quotations-itineraries.items.store');
-    // Route::put('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsUpdate'])->name('quotations-itineraries.items.update');
-    // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
 
@@ -99,6 +129,16 @@ Route::group([], function () {
         Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
 
+
+// GET    /api/v1/catalog/service-variants/{variant}/base-price
+// POST   /api/v1/catalog/service-variants/{variant}/base-price
+// PUT    /api/v1/catalog/service-variants/{variant}/base-price
+// DELETE /api/v1/catalog/service-variants/{variant}/base-price
+
+// GET    /api/v1/pricing/price-lists/{priceList}/items
+// POST   /api/v1/pricing/price-lists/{priceList}/items
+// PUT    /api/v1/pricing/price-lists/{priceList}/items/{item}
+// DELETE /api/v1/pricing/price-lists/{priceList}/items/{item}
     
        
 });
