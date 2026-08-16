@@ -98,7 +98,7 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items' => ['required','array','min:1'],
 
-            'itineraries.*.items.*.uuid' => ['required','uuid'],
+            //'itineraries.*.items.*.uuid' => ['required','uuid'],
 
             'itineraries.*.items.*.service_id'
                 => ['nullable','exists:services,id'],
