@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use App\Models\ServiceVariant;
 use App\Pricing\Price\Models\Price;
+use App\Pricing\BasePrice\Models\BasePrice;
+use App\Pricing\PriceList\Models\PriceList;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 
 use App\Traits\HasHistory;
 
@@ -38,6 +42,19 @@ class QuotationItem extends Model
         'duration',
         'quantity',
         'price_id',
+
+        'base_price_id',
+        'price_list_id',
+        'price_list_item_id',
+
+        'pricing_source',
+
+        'base_cost',
+        'base_price',
+
+        'adjustment_type',
+        'adjustment_value',
+
         'unit_cost',
         'unit_price',
         'subtotal',
@@ -64,6 +81,10 @@ class QuotationItem extends Model
         'active' => 'boolean',
 
         'calculated_at' => 'datetime',
+
+        'base_cost' => 'decimal:2',
+        'base_price' => 'decimal:2',
+        'adjustment_value' => 'decimal:4',
     ];
 
     /**
@@ -108,6 +129,21 @@ class QuotationItem extends Model
             QuotationItinerary::class,
             'quotation_itinerary_id'
         );
+    }
+
+    public function basePrice(): BelongsTo
+    {
+        return $this->belongsTo(BasePrice::class);
+    }
+
+    public function priceList(): BelongsTo
+    {
+        return $this->belongsTo(PriceList::class);
+    }
+
+    public function priceListItem(): BelongsTo
+    {
+        return $this->belongsTo(PriceListItem::class);
     }
     
      /*

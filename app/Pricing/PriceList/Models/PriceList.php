@@ -5,10 +5,13 @@ namespace App\Pricing\PriceList\Models;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\Currency;
 use App\Pricing\Price\Models\Price;
+use App\Models\ServiceCategory;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 
 class PriceList extends Model
 {
@@ -67,6 +70,16 @@ class PriceList extends Model
     public function prices(): HasMany
     {
         return $this->hasMany(Price::class);
+    }
+
+    public function serviceCategory(): BelongsTo
+    {
+        return $this->belongsTo(ServiceCategory::class);
+    }
+
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
     }
 
     /*

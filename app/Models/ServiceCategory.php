@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Pricing\PriceList\Models\PriceList;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ServiceCategory extends Model
 {
@@ -24,5 +26,10 @@ class ServiceCategory extends Model
     public function services()
     {
         return $this->hasMany(Service::class);
+    }
+
+    public function priceLists(): HasMany
+    {
+        return $this->hasMany(PriceList::class, 'service_category_id');
     }
 }

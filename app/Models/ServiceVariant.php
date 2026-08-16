@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Pricing\Price\Models\Price;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
+use App\Pricing\BasePrice\Models\BasePrice;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 
 class ServiceVariant extends Model
 {
@@ -61,6 +65,16 @@ class ServiceVariant extends Model
         return $this->hasMany(Price::class);
     }
 
+    public function basePrice(): HasOne
+    {
+        return $this->hasOne(BasePrice::class);
+    }
+
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
+    }
+    
     /*
     |--------------------------------------------------------------------------
     | Query Scopes
