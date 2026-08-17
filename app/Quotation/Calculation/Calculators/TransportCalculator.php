@@ -16,19 +16,17 @@ class TransportCalculator implements CalculatorInterface
     /**
      * Calcular transporte.
      *
-     * Por ahora:
+     * Responsabilidades:
      *
-     * - Genera recomendaciones de vehículos.
-     * - Usa la recomendación #1 como selección automática.
-     * - Devuelve las demás recomendaciones en metadata.
+     * - Obtener pasajeros.
+     * - Obtener vehículos candidatos.
+     * - Solicitar recomendaciones al VehicleAllocator.
+     * - Seleccionar la mejor recomendación.
+     * - Construir CalculationResult.
      *
-     * Más adelante podremos considerar:
-     *
-     * - equipaje,
-     * - carga,
-     * - cantidad de trayectos,
-     * - duración,
-     * - vehículo seleccionado manualmente.
+     * El cálculo de precios NO pertenece aquí.
+     * VehicleAllocator utilizará PriceResolver para valorizar
+     * cada combinación.
      */
     public function calculate(
         array $item
@@ -48,6 +46,19 @@ class TransportCalculator implements CalculatorInterface
 
         /*
         |--------------------------------------------------------------------------
+        | Fecha del servicio
+        |--------------------------------------------------------------------------
+        |
+        | PriceResolver necesita conocer la fecha para determinar
+        | la PriceList correspondiente a TRANSPORT.
+        |
+        */
+
+        $serviceDate =
+            $this->resolveServiceDate($item);
+
+        /*
+        |--------------------------------------------------------------------------
         | Recomendaciones
         |--------------------------------------------------------------------------
         */
@@ -56,6 +67,7 @@ class TransportCalculator implements CalculatorInterface
             $this->vehicleAllocator->recommend(
                 passengers: $passengers,
                 vehicleTypes: $vehicleTypes,
+                serviceDate: $serviceDate,
                 limit: 5
             );
 
@@ -67,25 +79,9 @@ class TransportCalculator implements CalculatorInterface
 
         if (empty($recommendations)) {
 
-            return new CalculationResult(
+            return $this->emptyResult(
                 item: $item,
-
-                quantity: 0,
-
-                unitCost: 0,
-
-                unitPrice: 0,
-
-                subtotalCost: 0,
-
-                subtotalSale: 0,
-
-                metadata: [
-                    'recommendations' => [],
-                    'selected_recommendation' => null,
-                    'passenger_count' => count($passengers),
-                    'vehicle_count' => 0,
-                ]
+                passengers: $passengers
             );
         }
 
@@ -94,7 +90,8 @@ class TransportCalculator implements CalculatorInterface
         | Recomendación seleccionada
         |--------------------------------------------------------------------------
         |
-        | Por ahora seleccionamos automáticamente la primera.
+        | VehicleAllocator debe devolver las recomendaciones ordenadas
+        | según el criterio que ya tienes implementado.
         |
         */
 
@@ -127,8 +124,8 @@ class TransportCalculator implements CalculatorInterface
             | Unitarios
             |--------------------------------------------------------------------------
             |
-            | No existe un único costo/precio unitario porque puede haber
-            | diferentes tipos de vehículos dentro de la misma combinación.
+            | Una recomendación puede estar formada por distintos vehículos.
+            | Por eso no existe necesariamente un único precio unitario.
             |
             */
 
@@ -140,6 +137,10 @@ class TransportCalculator implements CalculatorInterface
             |--------------------------------------------------------------------------
             | Totales
             |--------------------------------------------------------------------------
+            |
+            | Estos valores ya vienen valorizados por VehicleAllocator
+            | utilizando PriceResolver.
+            |
             */
 
             subtotalCost:
@@ -173,6 +174,87 @@ class TransportCalculator implements CalculatorInterface
 
                 'unused_capacity' =>
                     $selected['unused_capacity'],
+
+                /*
+                |--------------------------------------------------------------------------
+                | Pricing context
+                |--------------------------------------------------------------------------
+                */
+
+                'service_date' =>
+                    $serviceDate,
+            ]
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resolve Service Date
+    |--------------------------------------------------------------------------
+    |
+    | Prioridad:
+    |
+    | 1. Fecha específica enviada al item.
+    | 2. Fecha del itinerario.
+    | 3. Fecha general disponible en el contexto.
+    |
+    */
+
+    protected function resolveServiceDate(
+        array $item
+    ): ?string {
+
+        return
+            $item['service_date']
+            ?? $item['travel_date']
+            ?? $item['itinerary_date']
+            ?? null;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Empty Result
+    |--------------------------------------------------------------------------
+    |
+    | Extraemos este bloque para mantener calculate() más limpio.
+    |
+    */
+
+    protected function emptyResult(
+        array $item,
+        array $passengers
+    ): CalculationResult {
+
+        return new CalculationResult(
+            item: $item,
+
+            quantity: 0,
+
+            unitCost: 0,
+
+            unitPrice: 0,
+
+            subtotalCost: 0,
+
+            subtotalSale: 0,
+
+            metadata: [
+                'recommendations' => [],
+
+                'selected_recommendation' =>
+                    null,
+
+                'passenger_count' =>
+                    count($passengers),
+
+                'vehicle_count' =>
+                    0,
+
+                'total_capacity' =>
+                    0,
+
+                'unused_capacity' =>
+                    0,
             ]
         );
     }

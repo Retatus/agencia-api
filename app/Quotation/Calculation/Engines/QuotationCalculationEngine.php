@@ -15,19 +15,94 @@ class QuotationCalculationEngine
     public function calculate(
         CalculationRequest $request
     ): array {
+
         $results = [];
 
-        foreach ($request->itineraries() as $itinerary) {
+        /*
+        |--------------------------------------------------------------------------
+        | Itinerarios
+        |--------------------------------------------------------------------------
+        */
 
-            foreach ($itinerary['items'] ?? [] as $item) {
+        foreach (
+            $request->itineraries()
+            as $itinerary
+        ) {
 
-                $calculator = $this->calculatorFactory->make(
-                    $item
-                );
+            /*
+            |--------------------------------------------------------------------------
+            | Fecha del itinerario
+            |--------------------------------------------------------------------------
+            |
+            | Esta fecha será utilizada por PriceResolver para determinar
+            | la PriceList correspondiente.
+            |
+            */
 
-                $results[] = $calculator->calculate(
-                    $item
-                );
+            $itineraryDate =
+                $itinerary['travel_date']
+                ?? $request->travelDate();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Items
+            |--------------------------------------------------------------------------
+            */
+
+            foreach (
+                $itinerary['items'] ?? []
+                as $item
+            ) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Contexto del servicio
+                |--------------------------------------------------------------------------
+                |
+                | No sobrescribimos service_date si el item ya trae
+                | una fecha específica.
+                |
+                */
+
+                $item['service_date'] =
+                    $item['service_date']
+                    ?? $item['travel_date']
+                    ?? $itineraryDate;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Itinerary Date
+                |--------------------------------------------------------------------------
+                |
+                | También la dejamos disponible explícitamente por
+                | compatibilidad con los calculators actuales.
+                |
+                */
+
+                $item['itinerary_date'] =
+                    $itineraryDate;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Calculator
+                |--------------------------------------------------------------------------
+                */
+
+                $calculator =
+                    $this->calculatorFactory->make(
+                        $item
+                    );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Calculation
+                |--------------------------------------------------------------------------
+                */
+
+                $results[] =
+                    $calculator->calculate(
+                        $item
+                    );
             }
         }
 

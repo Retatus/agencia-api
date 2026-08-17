@@ -17,8 +17,9 @@ class CalculationRequest
     /**
      * Crear desde array.
      */
-    public static function fromArray(array $data): self
-    {
+    public static function fromArray(
+        array $data
+    ): self {
         return new self(
             quotation: $data
         );
@@ -29,7 +30,9 @@ class CalculationRequest
      */
     public function itineraries(): array
     {
-        return $this->quotation['itineraries'] ?? [];
+        return
+            $this->quotation['itineraries']
+            ?? [];
     }
 
     /**
@@ -37,7 +40,9 @@ class CalculationRequest
      */
     public function passengers(): array
     {
-        return $this->quotation['passengers'] ?? [];
+        return
+            $this->quotation['passengers']
+            ?? [];
     }
 
     /**
@@ -45,15 +50,22 @@ class CalculationRequest
      */
     public function currencyId(): ?int
     {
-        return $this->quotation['currency_id'] ?? null;
+        return
+            $this->quotation['currency_id']
+            ?? null;
     }
 
     /**
-     * Obtener lista de precios.
+     * Fecha general de viaje.
+     *
+     * Puede utilizarse como fallback cuando un itinerario
+     * todavía no tenga una fecha específica.
      */
-    public function priceListId(): ?int
+    public function travelDate(): ?string
     {
-        return $this->quotation['price_list_id'] ?? null;
+        return
+            $this->quotation['travel_date']
+            ?? null;
     }
 
     /**

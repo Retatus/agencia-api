@@ -2,13 +2,23 @@
 
 namespace App\Quotation\Calculation\Services;
 
+use App\Pricing\Resolution\DTOs\PriceContext;
+use App\Pricing\Resolution\Services\PriceResolver;
+use Carbon\Carbon;
+
 class RoomAllocator
 {
+    public function __construct(
+        protected PriceResolver $priceResolver
+    ) {
+    }
+
     /**
      * Obtener las mejores distribuciones posibles.
      *
      * @param array $passengers
      * @param array $roomTypes
+     * @param string|null $serviceDate
      * @param int $limit
      *
      * @return array
@@ -16,12 +26,17 @@ class RoomAllocator
     public function recommend(
         array $passengers,
         array $roomTypes,
+        ?string $serviceDate = null,
         int $limit = 5
     ): array {
 
-        $passengerCount = count($passengers);
+        $passengerCount =
+            count($passengers);
 
-        if ($passengerCount === 0 || empty($roomTypes)) {
+        if (
+            $passengerCount === 0
+            || empty($roomTypes)
+        ) {
             return [];
         }
 
@@ -32,45 +47,106 @@ class RoomAllocator
         */
 
         $rooms = collect($roomTypes)
-            ->map(function ($room) {
+            ->map(function ($room) use ($serviceDate) {
+
+                $serviceVariantId =
+                    $room['service_variant_id']
+                    ?? $room['id']
+                    ?? null;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Resolver precio
+                |--------------------------------------------------------------------------
+                */
+
+                $pricing =
+                    $this->resolveRoomPrice(
+                        serviceVariantId:
+                            $serviceVariantId,
+
+                        serviceDate:
+                            $serviceDate,
+
+                        room:
+                            $room
+                    );
+
                 return [
                     'id' =>
-                        $room['id'] ?? null,
+                        $room['id']
+                        ?? null,
 
                     'service_variant_id' =>
-                        $room['service_variant_id']
-                        ?? $room['id']
-                        ?? null,
+                        $serviceVariantId,
 
                     'name' =>
                         $room['name']
                         ?? 'Habitación',
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Capacidad
+                    |--------------------------------------------------------------------------
+                    */
+
                     'min_capacity' =>
-                        (int) ($room['min_capacity'] ?? 1),
+                        (int) (
+                            $room['min_capacity']
+                            ?? 1
+                        ),
 
                     'max_capacity' =>
-                        (int) ($room['max_capacity'] ?? 1),
+                        (int) (
+                            $room['max_capacity']
+                            ?? 1
+                        ),
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Valores económicos
+                    |--------------------------------------------------------------------------
+                    */
 
                     'unit_cost' =>
-                        (float) (
-                            $room['unit_cost']
-                            ?? $room['cost']
-                            ?? 0
-                        ),
+                        $pricing['unit_cost'],
 
                     'unit_price' =>
-                        (float) (
-                            $room['unit_price']
-                            ?? $room['sale_price']
-                            ?? 0
-                        ),
+                        $pricing['unit_price'],
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Pricing Metadata
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'pricing_source' =>
+                        $pricing['pricing_source'],
+
+                    'base_price_id' =>
+                        $pricing['base_price_id'],
+
+                    'price_list_id' =>
+                        $pricing['price_list_id'],
+
+                    'price_list_item_id' =>
+                        $pricing['price_list_item_id'],
+
+                    'adjustment_type' =>
+                        $pricing['adjustment_type'],
+
+                    'adjustment_value' =>
+                        $pricing['adjustment_value'],
                 ];
             })
             ->filter(
-                fn ($room) => $room['max_capacity'] > 0
+                fn ($room) =>
+                    $room['service_variant_id'] !== null
+                    && $room['max_capacity'] > 0
             )
-            ->sortByDesc('max_capacity')
+            ->sortByDesc(
+                'max_capacity'
+            )
             ->values()
             ->all();
 
@@ -87,12 +163,23 @@ class RoomAllocator
         $combinations = [];
 
         $this->search(
-            rooms: $rooms,
-            remainingPassengers: $passengerCount,
-            passengerCount: $passengerCount,
-            index: 0,
-            currentCombination: [],
-            combinations: $combinations
+            rooms:
+                $rooms,
+
+            remainingPassengers:
+                $passengerCount,
+
+            passengerCount:
+                $passengerCount,
+
+            index:
+                0,
+
+            currentCombination:
+                [],
+
+            combinations:
+                $combinations
         );
 
         /*
@@ -101,9 +188,10 @@ class RoomAllocator
         |--------------------------------------------------------------------------
         */
 
-        $combinations = $this->uniqueCombinations(
-            $combinations
-        );
+        $combinations =
+            $this->uniqueCombinations(
+                $combinations
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -113,20 +201,25 @@ class RoomAllocator
 
         usort(
             $combinations,
-            fn ($a, $b) => $this->compare($a, $b)
+            fn ($a, $b) =>
+                $this->compare(
+                    $a,
+                    $b
+                )
         );
 
         /*
         |--------------------------------------------------------------------------
-        | Limitar cantidad de recomendaciones
+        | Limitar recomendaciones
         |--------------------------------------------------------------------------
         */
 
-        $combinations = array_slice(
-            $combinations,
-            0,
-            $limit
-        );
+        $combinations =
+            array_slice(
+                $combinations,
+                0,
+                $limit
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -136,17 +229,124 @@ class RoomAllocator
 
         return collect($combinations)
             ->values()
-            ->map(function ($combination, $index) {
+            ->map(
+                function (
+                    $combination,
+                    $index
+                ) {
+                    $combination['rank'] =
+                        $index + 1;
 
-                $combination['rank'] =
-                    $index + 1;
+                    $combination['recommended'] =
+                        $index === 0;
 
-                $combination['recommended'] =
-                    $index === 0;
-
-                return $combination;
-            })
+                    return $combination;
+                }
+            )
             ->all();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resolve Room Price
+    |--------------------------------------------------------------------------
+    */
+
+    protected function resolveRoomPrice(
+        ?int $serviceVariantId,
+        ?string $serviceDate,
+        array $room
+    ): array {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nuevo Pricing
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $serviceVariantId !== null
+            && $serviceDate !== null
+        ) {
+            $resolved =
+                $this->priceResolver->resolve(
+                    new PriceContext(
+                        serviceVariantId:
+                            $serviceVariantId,
+
+                        date:
+                            Carbon::parse(
+                                $serviceDate
+                            )
+                    )
+                );
+
+            return [
+                'unit_cost' =>
+                    (float) $resolved->finalCost,
+
+                'unit_price' =>
+                    (float) $resolved->finalPrice,
+
+                'pricing_source' =>
+                    $resolved->pricingSource,
+
+                'base_price_id' =>
+                    $resolved->basePriceId,
+
+                'price_list_id' =>
+                    $resolved->priceListId,
+
+                'price_list_item_id' =>
+                    $resolved->priceListItemId,
+
+                'adjustment_type' =>
+                    $resolved->adjustmentType,
+
+                'adjustment_value' =>
+                    $resolved->adjustmentValue,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Legacy fallback
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+            'unit_cost' =>
+                (float) (
+                    $room['unit_cost']
+                    ?? $room['cost']
+                    ?? 0
+                ),
+
+            'unit_price' =>
+                (float) (
+                    $room['unit_price']
+                    ?? $room['sale_price']
+                    ?? 0
+                ),
+
+            'pricing_source' =>
+                'LEGACY',
+
+            'base_price_id' =>
+                null,
+
+            'price_list_id' =>
+                null,
+
+            'price_list_item_id' =>
+                null,
+
+            'adjustment_type' =>
+                null,
+
+            'adjustment_value' =>
+                null,
+        ];
     }
 
     /**
@@ -169,32 +369,39 @@ class RoomAllocator
 
         if ($remainingPassengers <= 0) {
 
-            $totalCapacity = collect($currentCombination)
-                ->sum(
-                    fn ($allocation) =>
-                        $allocation['quantity']
-                        * $allocation['room']['max_capacity']
-                );
+            $totalCapacity =
+                collect($currentCombination)
+                    ->sum(
+                        fn ($allocation) =>
+                            $allocation['quantity']
+                            * $allocation['room']['max_capacity']
+                    );
 
-            $totalRooms = collect($currentCombination)
-                ->sum('quantity');
+            $totalRooms =
+                collect($currentCombination)
+                    ->sum(
+                        'quantity'
+                    );
 
-            $totalCost = collect($currentCombination)
-                ->sum(
-                    fn ($allocation) =>
-                        $allocation['quantity']
-                        * $allocation['room']['unit_cost']
-                );
+            $totalCost =
+                collect($currentCombination)
+                    ->sum(
+                        fn ($allocation) =>
+                            $allocation['quantity']
+                            * $allocation['room']['unit_cost']
+                    );
 
-            $totalSale = collect($currentCombination)
-                ->sum(
-                    fn ($allocation) =>
-                        $allocation['quantity']
-                        * $allocation['room']['unit_price']
-                );
+            $totalSale =
+                collect($currentCombination)
+                    ->sum(
+                        fn ($allocation) =>
+                            $allocation['quantity']
+                            * $allocation['room']['unit_price']
+                    );
 
             $unusedCapacity =
-                $totalCapacity - $passengerCount;
+                $totalCapacity
+                - $passengerCount;
 
             /*
             |--------------------------------------------------------------------------
@@ -202,48 +409,100 @@ class RoomAllocator
             |--------------------------------------------------------------------------
             */
 
-            $roomAllocation = collect($currentCombination)
-                ->map(function ($allocation) {
+            $roomAllocation =
+                collect($currentCombination)
+                    ->map(
+                        function ($allocation) {
 
-                    $room = $allocation['room'];
+                            $room =
+                                $allocation['room'];
 
-                    $quantity =
-                        (int) $allocation['quantity'];
+                            $quantity =
+                                (int) $allocation['quantity'];
 
-                    return [
-                        'service_variant_id' =>
-                            $room['service_variant_id'],
+                            return [
+                                'service_variant_id' =>
+                                    $room['service_variant_id'],
 
-                        'name' =>
-                            $room['name'],
+                                'name' =>
+                                    $room['name'],
 
-                        'quantity' =>
-                            $quantity,
+                                'quantity' =>
+                                    $quantity,
 
-                        'capacity_per_room' =>
-                            $room['max_capacity'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Capacidad
+                                |--------------------------------------------------------------------------
+                                */
 
-                        'total_capacity' =>
-                            $quantity
-                            * $room['max_capacity'],
+                                'capacity_per_room' =>
+                                    $room['max_capacity'],
 
-                        'unit_cost' =>
-                            $room['unit_cost'],
+                                'total_capacity' =>
+                                    $quantity
+                                    * $room['max_capacity'],
 
-                        'unit_price' =>
-                            $room['unit_price'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Valores económicos
+                                |--------------------------------------------------------------------------
+                                */
 
-                        'subtotal_cost' =>
-                            $quantity
-                            * $room['unit_cost'],
+                                'unit_cost' =>
+                                    $room['unit_cost'],
 
-                        'subtotal_sale' =>
-                            $quantity
-                            * $room['unit_price'],
-                    ];
-                })
-                ->values()
-                ->all();
+                                'unit_price' =>
+                                    $room['unit_price'],
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Pricing
+                                |--------------------------------------------------------------------------
+                                */
+
+                                'pricing_source' =>
+                                    $room['pricing_source'],
+
+                                'base_price_id' =>
+                                    $room['base_price_id'],
+
+                                'price_list_id' =>
+                                    $room['price_list_id'],
+
+                                'price_list_item_id' =>
+                                    $room['price_list_item_id'],
+
+                                'adjustment_type' =>
+                                    $room['adjustment_type'],
+
+                                'adjustment_value' =>
+                                    $room['adjustment_value'],
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Subtotales
+                                |--------------------------------------------------------------------------
+                                */
+
+                                'subtotal_cost' =>
+                                    $quantity
+                                    * $room['unit_cost'],
+
+                                'subtotal_sale' =>
+                                    $quantity
+                                    * $room['unit_price'],
+                            ];
+                        }
+                    )
+                    ->values()
+                    ->all();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Registrar combinación
+            |--------------------------------------------------------------------------
+            */
 
             $combinations[] = [
                 'rooms' =>
@@ -274,13 +533,25 @@ class RoomAllocator
         |--------------------------------------------------------------------------
         */
 
-        if ($index >= count($rooms)) {
+        if (
+            $index >= count(
+                $rooms
+            )
+        ) {
             return;
         }
 
-        $room = $rooms[$index];
+        /*
+        |--------------------------------------------------------------------------
+        | Habitación actual
+        |--------------------------------------------------------------------------
+        */
 
-        $capacity = $room['max_capacity'];
+        $room =
+            $rooms[$index];
+
+        $capacity =
+            $room['max_capacity'];
 
         /*
         |--------------------------------------------------------------------------
@@ -288,9 +559,11 @@ class RoomAllocator
         |--------------------------------------------------------------------------
         */
 
-        $maxQuantity = (int) ceil(
-            $remainingPassengers / $capacity
-        );
+        $maxQuantity =
+            (int) ceil(
+                $remainingPassengers
+                / $capacity
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -309,17 +582,30 @@ class RoomAllocator
 
             if ($quantity > 0) {
                 $nextCombination[] = [
-                    'room' => $room,
-                    'quantity' => $quantity,
+                    'room' =>
+                        $room,
+
+                    'quantity' =>
+                        $quantity,
                 ];
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Continuar búsqueda
+            |--------------------------------------------------------------------------
+            */
+
             $this->search(
-                rooms: $rooms,
+                rooms:
+                    $rooms,
 
                 remainingPassengers:
                     $remainingPassengers
-                    - ($quantity * $capacity),
+                    - (
+                        $quantity
+                        * $capacity
+                    ),
 
                 passengerCount:
                     $passengerCount,
@@ -338,6 +624,12 @@ class RoomAllocator
 
     /**
      * Ordenar de mejor a peor.
+     *
+     * Prioridad:
+     *
+     * 1. Menor capacidad sobrante.
+     * 2. Menor costo.
+     * 3. Menor cantidad de habitaciones.
      */
     protected function compare(
         array $a,
@@ -394,24 +686,39 @@ class RoomAllocator
 
         $unique = [];
 
-        foreach ($combinations as $combination) {
+        foreach (
+            $combinations
+            as $combination
+        ) {
 
-            $parts = collect($combination['rooms'])
-                ->sortBy('service_variant_id')
-                ->map(
-                    fn ($room) =>
-                        $room['service_variant_id']
-                        . ':'
-                        . $room['quantity']
+            $parts =
+                collect(
+                    $combination['rooms']
                 )
-                ->values()
-                ->all();
+                    ->sortBy(
+                        'service_variant_id'
+                    )
+                    ->map(
+                        fn ($room) =>
+                            $room['service_variant_id']
+                            . ':'
+                            . $room['quantity']
+                    )
+                    ->values()
+                    ->all();
 
-            $key = implode('|', $parts);
+            $key =
+                implode(
+                    '|',
+                    $parts
+                );
 
-            $unique[$key] = $combination;
+            $unique[$key] =
+                $combination;
         }
 
-        return array_values($unique);
+        return array_values(
+            $unique
+        );
     }
 }

@@ -2,8 +2,17 @@
 
 namespace App\Quotation\Calculation\Services;
 
+use App\Pricing\Resolution\DTOs\PriceContext;
+use App\Pricing\Resolution\Services\PriceResolver;
+use Carbon\Carbon;
+
 class VehicleAllocator
 {
+    public function __construct(
+        protected PriceResolver $priceResolver
+    ) {
+    }
+
     /**
      * Obtener las mejores combinaciones de vehículos.
      *
@@ -14,21 +23,28 @@ class VehicleAllocator
      * 3. Menor costo total.
      * 4. Menor cantidad de vehículos.
      *
-     * No consulta base de datos.
-     *
-     * @param array $passengers
-     * @param array $vehicleTypes
-     * @param int   $limit
+     * @param array       $passengers
+     * @param array       $vehicleTypes
+     * @param string|null $serviceDate
+     * @param int         $limit
      *
      * @return array
      */
     public function recommend(
         array $passengers,
         array $vehicleTypes,
+        ?string $serviceDate = null,
         int $limit = 5
     ): array {
 
-        $passengerCount = count($passengers);
+        /*
+        |--------------------------------------------------------------------------
+        | Cantidad de pasajeros
+        |--------------------------------------------------------------------------
+        */
+
+        $passengerCount =
+            count($passengers);
 
         if (
             $passengerCount === 0
@@ -41,20 +57,64 @@ class VehicleAllocator
         |--------------------------------------------------------------------------
         | Normalizar vehículos
         |--------------------------------------------------------------------------
+        |
+        | Aquí resolvemos el precio aplicable por:
+        |
+        | - variante
+        | - categoría
+        | - fecha
+        | - temporada
+        |
+        | mediante PriceResolver.
+        |
         */
 
         $vehicles = collect($vehicleTypes)
-            ->map(function ($vehicle) {
+            ->map(function ($vehicle) use ($serviceDate) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Service Variant
+                |--------------------------------------------------------------------------
+                */
+
+                $serviceVariantId =
+                    $vehicle['service_variant_id']
+                    ?? $vehicle['id']
+                    ?? null;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Pricing
+                |--------------------------------------------------------------------------
+                */
+
+                $pricing =
+                    $this->resolveVehiclePrice(
+                        serviceVariantId:
+                            $serviceVariantId,
+
+                        serviceDate:
+                            $serviceDate,
+
+                        vehicle:
+                            $vehicle
+                    );
 
                 return [
 
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Identificación
+                    |--------------------------------------------------------------------------
+                    */
+
                     'id' =>
-                        $vehicle['id'] ?? null,
+                        $vehicle['id']
+                        ?? null,
 
                     'service_variant_id' =>
-                        $vehicle['service_variant_id']
-                        ?? $vehicle['id']
-                        ?? null,
+                        $serviceVariantId,
 
                     'name' =>
                         $vehicle['name']
@@ -85,25 +145,59 @@ class VehicleAllocator
                     */
 
                     'unit_cost' =>
-                        (float) (
-                            $vehicle['unit_cost']
-                            ?? $vehicle['cost']
-                            ?? 0
-                        ),
+                        $pricing['unit_cost'],
 
                     'unit_price' =>
-                        (float) (
-                            $vehicle['unit_price']
-                            ?? $vehicle['sale_price']
-                            ?? 0
-                        ),
+                        $pricing['unit_price'],
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Pricing Metadata
+                    |--------------------------------------------------------------------------
+                    */
+
+                    'pricing_source' =>
+                        $pricing['pricing_source'],
+
+                    'base_price_id' =>
+                        $pricing['base_price_id'],
+
+                    'price_list_id' =>
+                        $pricing['price_list_id'],
+
+                    'price_list_item_id' =>
+                        $pricing['price_list_item_id'],
+
+                    'adjustment_type' =>
+                        $pricing['adjustment_type'],
+
+                    'adjustment_value' =>
+                        $pricing['adjustment_value'],
                 ];
             })
+
+            /*
+            |--------------------------------------------------------------------------
+            | Variantes válidas
+            |--------------------------------------------------------------------------
+            */
+
             ->filter(
                 fn ($vehicle) =>
-                    $vehicle['max_capacity'] > 0
+                    $vehicle['service_variant_id'] !== null
+                    && $vehicle['max_capacity'] > 0
             )
-            ->sortByDesc('max_capacity')
+
+            /*
+            |--------------------------------------------------------------------------
+            | Primero vehículos de mayor capacidad
+            |--------------------------------------------------------------------------
+            */
+
+            ->sortByDesc(
+                'max_capacity'
+            )
+
             ->values()
             ->all();
 
@@ -120,12 +214,23 @@ class VehicleAllocator
         $combinations = [];
 
         $this->search(
-            vehicles: $vehicles,
-            remainingPassengers: $passengerCount,
-            passengerCount: $passengerCount,
-            index: 0,
-            currentCombination: [],
-            combinations: $combinations
+            vehicles:
+                $vehicles,
+
+            remainingPassengers:
+                $passengerCount,
+
+            passengerCount:
+                $passengerCount,
+
+            index:
+                0,
+
+            currentCombination:
+                [],
+
+            combinations:
+                $combinations
         );
 
         /*
@@ -134,9 +239,10 @@ class VehicleAllocator
         |--------------------------------------------------------------------------
         */
 
-        $combinations = $this->uniqueCombinations(
-            $combinations
-        );
+        $combinations =
+            $this->uniqueCombinations(
+                $combinations
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -146,6 +252,7 @@ class VehicleAllocator
 
         usort(
             $combinations,
+
             fn ($a, $b) =>
                 $this->compare(
                     $a,
@@ -159,11 +266,12 @@ class VehicleAllocator
         |--------------------------------------------------------------------------
         */
 
-        $combinations = array_slice(
-            $combinations,
-            0,
-            $limit
-        );
+        $combinations =
+            array_slice(
+                $combinations,
+                0,
+                $limit
+            );
 
         /*
         |--------------------------------------------------------------------------
@@ -173,20 +281,145 @@ class VehicleAllocator
 
         return collect($combinations)
             ->values()
-            ->map(function (
-                $combination,
-                $index
-            ) {
+            ->map(
+                function (
+                    $combination,
+                    $index
+                ) {
 
-                $combination['rank'] =
-                    $index + 1;
+                    $combination['rank'] =
+                        $index + 1;
 
-                $combination['recommended'] =
-                    $index === 0;
+                    $combination['recommended'] =
+                        $index === 0;
 
-                return $combination;
-            })
+                    return $combination;
+                }
+            )
             ->all();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resolve Vehicle Price
+    |--------------------------------------------------------------------------
+    |
+    | Nuevo Pricing:
+    |
+    | ServiceVariant
+    |      ↓
+    | BasePrice
+    |      ↓
+    | PriceList por categoría + fecha
+    |      ↓
+    | PriceListItem
+    |      ↓
+    | precio final
+    |
+    | Mientras terminamos la migración dejamos compatibilidad con
+    | unit_cost / cost / unit_price / sale_price anteriores.
+    |
+    */
+
+    protected function resolveVehiclePrice(
+        ?int $serviceVariantId,
+        ?string $serviceDate,
+        array $vehicle
+    ): array {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Nuevo PriceResolver
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $serviceVariantId !== null
+            && $serviceDate !== null
+        ) {
+            $resolved =
+                $this->priceResolver->resolve(
+                    new PriceContext(
+                        serviceVariantId:
+                            $serviceVariantId,
+
+                        date:
+                            Carbon::parse(
+                                $serviceDate
+                            )
+                    )
+                );
+
+            return [
+                'unit_cost' =>
+                    (float) $resolved->finalCost,
+
+                'unit_price' =>
+                    (float) $resolved->finalPrice,
+
+                'pricing_source' =>
+                    $resolved->pricingSource,
+
+                'base_price_id' =>
+                    $resolved->basePriceId,
+
+                'price_list_id' =>
+                    $resolved->priceListId,
+
+                'price_list_item_id' =>
+                    $resolved->priceListItemId,
+
+                'adjustment_type' =>
+                    $resolved->adjustmentType,
+
+                'adjustment_value' =>
+                    $resolved->adjustmentValue,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Legacy fallback
+        |--------------------------------------------------------------------------
+        |
+        | Esto permite que durante la transición siga funcionando código
+        | que todavía envíe precios precalculados.
+        |
+        */
+
+        return [
+            'unit_cost' =>
+                (float) (
+                    $vehicle['unit_cost']
+                    ?? $vehicle['cost']
+                    ?? 0
+                ),
+
+            'unit_price' =>
+                (float) (
+                    $vehicle['unit_price']
+                    ?? $vehicle['sale_price']
+                    ?? 0
+                ),
+
+            'pricing_source' =>
+                'LEGACY',
+
+            'base_price_id' =>
+                null,
+
+            'price_list_id' =>
+                null,
+
+            'price_list_item_id' =>
+                null,
+
+            'adjustment_type' =>
+                null,
+
+            'adjustment_value' =>
+                null,
+        ];
     }
 
     /**
@@ -231,7 +464,9 @@ class VehicleAllocator
 
             $totalVehicles =
                 collect($currentCombination)
-                    ->sum('quantity');
+                    ->sum(
+                        'quantity'
+                    );
 
             /*
             |--------------------------------------------------------------------------
@@ -273,65 +508,97 @@ class VehicleAllocator
 
             $vehicleAllocation =
                 collect($currentCombination)
-                    ->map(function ($allocation) {
+                    ->map(
+                        function ($allocation) {
 
-                        $vehicle =
-                            $allocation['vehicle'];
+                            $vehicle =
+                                $allocation['vehicle'];
 
-                        $quantity =
-                            (int) $allocation['quantity'];
+                            $quantity =
+                                (int) $allocation['quantity'];
 
-                        return [
+                            return [
 
-                            'service_variant_id' =>
-                                $vehicle['service_variant_id'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Identificación
+                                |--------------------------------------------------------------------------
+                                */
 
-                            'name' =>
-                                $vehicle['name'],
+                                'service_variant_id' =>
+                                    $vehicle['service_variant_id'],
 
-                            'quantity' =>
-                                $quantity,
+                                'name' =>
+                                    $vehicle['name'],
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Capacidad
-                            |--------------------------------------------------------------------------
-                            */
+                                'quantity' =>
+                                    $quantity,
 
-                            'capacity_per_vehicle' =>
-                                $vehicle['max_capacity'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Capacidad
+                                |--------------------------------------------------------------------------
+                                */
 
-                            'total_capacity' =>
-                                $quantity
-                                * $vehicle['max_capacity'],
+                                'capacity_per_vehicle' =>
+                                    $vehicle['max_capacity'],
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Valores unitarios
-                            |--------------------------------------------------------------------------
-                            */
+                                'total_capacity' =>
+                                    $quantity
+                                    * $vehicle['max_capacity'],
 
-                            'unit_cost' =>
-                                $vehicle['unit_cost'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Valores unitarios
+                                |--------------------------------------------------------------------------
+                                */
 
-                            'unit_price' =>
-                                $vehicle['unit_price'],
+                                'unit_cost' =>
+                                    $vehicle['unit_cost'],
 
-                            /*
-                            |--------------------------------------------------------------------------
-                            | Subtotales
-                            |--------------------------------------------------------------------------
-                            */
+                                'unit_price' =>
+                                    $vehicle['unit_price'],
 
-                            'subtotal_cost' =>
-                                $quantity
-                                * $vehicle['unit_cost'],
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Pricing
+                                |--------------------------------------------------------------------------
+                                */
 
-                            'subtotal_sale' =>
-                                $quantity
-                                * $vehicle['unit_price'],
-                        ];
-                    })
+                                'pricing_source' =>
+                                    $vehicle['pricing_source'],
+
+                                'base_price_id' =>
+                                    $vehicle['base_price_id'],
+
+                                'price_list_id' =>
+                                    $vehicle['price_list_id'],
+
+                                'price_list_item_id' =>
+                                    $vehicle['price_list_item_id'],
+
+                                'adjustment_type' =>
+                                    $vehicle['adjustment_type'],
+
+                                'adjustment_value' =>
+                                    $vehicle['adjustment_value'],
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Subtotales
+                                |--------------------------------------------------------------------------
+                                */
+
+                                'subtotal_cost' =>
+                                    $quantity
+                                    * $vehicle['unit_cost'],
+
+                                'subtotal_sale' =>
+                                    $quantity
+                                    * $vehicle['unit_price'],
+                            ];
+                        }
+                    )
                     ->values()
                     ->all();
 
@@ -371,7 +638,11 @@ class VehicleAllocator
         |--------------------------------------------------------------------------
         */
 
-        if ($index >= count($vehicles)) {
+        if (
+            $index >= count(
+                $vehicles
+            )
+        ) {
             return;
         }
 
@@ -451,7 +722,6 @@ class VehicleAllocator
             */
 
             $this->search(
-
                 vehicles:
                     $vehicles,
 
@@ -538,11 +808,18 @@ class VehicleAllocator
 
         $unique = [];
 
-        foreach ($combinations as $combination) {
+        foreach (
+            $combinations
+            as $combination
+        ) {
 
             $parts =
-                collect($combination['vehicles'])
-                    ->sortBy('service_variant_id')
+                collect(
+                    $combination['vehicles']
+                )
+                    ->sortBy(
+                        'service_variant_id'
+                    )
                     ->map(
                         fn ($vehicle) =>
                             $vehicle['service_variant_id']
@@ -553,7 +830,10 @@ class VehicleAllocator
                     ->all();
 
             $key =
-                implode('|', $parts);
+                implode(
+                    '|',
+                    $parts
+                );
 
             $unique[$key] =
                 $combination;
