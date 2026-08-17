@@ -3,6 +3,7 @@
 namespace App\Pricing\BasePrice\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateBasePriceRequest extends FormRequest
 {
@@ -13,29 +14,63 @@ class UpdateBasePriceRequest extends FormRequest
 
     public function rules(): array
     {
+        $basePrice =
+            $this->route(
+                'base_price'
+            )
+            ?? $this->route(
+                'basePrice'
+            );
+
+        $basePriceId =
+            is_object($basePrice)
+                ? $basePrice->id
+                : $basePrice;
+
         return [
-            'currency_id' => [
-                'sometimes',
+            'service_variant_id' => [
                 'required',
+                'integer',
+                'exists:service_variants,id',
+
+                Rule::unique(
+                    'base_prices',
+                    'service_variant_id'
+                )
+                    ->where(
+                        fn ($query) =>
+                            $query->where(
+                                'currency_id',
+                                $this->input(
+                                    'currency_id'
+                                )
+                            )
+                    )
+                    ->ignore(
+                        $basePriceId
+                    ),
+            ],
+
+            'currency_id' => [
+                'required',
+                'integer',
                 'exists:currencies,id',
             ],
 
             'cost' => [
-                'sometimes',
                 'required',
                 'numeric',
                 'min:0',
             ],
 
             'sale_price' => [
-                'sometimes',
                 'required',
                 'numeric',
                 'min:0',
             ],
 
             'active' => [
-                'sometimes',
+                'required',
                 'boolean',
             ],
         ];

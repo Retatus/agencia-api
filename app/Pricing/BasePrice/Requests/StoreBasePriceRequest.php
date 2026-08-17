@@ -3,6 +3,7 @@
 namespace App\Pricing\BasePrice\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBasePriceRequest extends FormRequest
 {
@@ -14,8 +15,35 @@ class StoreBasePriceRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'service_variant_id' => [
+                'required',
+                'integer',
+                'exists:service_variants,id',
+
+                /*
+                |--------------------------------------------------------------------------
+                | Una variante + moneda debería tener un solo BasePrice activo/base.
+                |--------------------------------------------------------------------------
+                */
+
+                Rule::unique(
+                    'base_prices',
+                    'service_variant_id'
+                )
+                    ->where(
+                        fn ($query) =>
+                            $query->where(
+                                'currency_id',
+                                $this->input(
+                                    'currency_id'
+                                )
+                            )
+                    ),
+            ],
+
             'currency_id' => [
                 'required',
+                'integer',
                 'exists:currencies,id',
             ],
 
@@ -32,7 +60,7 @@ class StoreBasePriceRequest extends FormRequest
             ],
 
             'active' => [
-                'sometimes',
+                'required',
                 'boolean',
             ],
         ];
@@ -41,18 +69,41 @@ class StoreBasePriceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'currency_id.required' => 'La moneda es obligatoria.',
-            'currency_id.exists' => 'La moneda seleccionada no es válida.',
+            'service_variant_id.required' =>
+                'La variante es obligatoria.',
 
-            'cost.required' => 'El costo es obligatorio.',
-            'cost.numeric' => 'El costo debe ser numérico.',
-            'cost.min' => 'El costo no puede ser negativo.',
+            'service_variant_id.exists' =>
+                'La variante seleccionada no es válida.',
 
-            'sale_price.required' => 'El precio de venta es obligatorio.',
-            'sale_price.numeric' => 'El precio de venta debe ser numérico.',
-            'sale_price.min' => 'El precio de venta no puede ser negativo.',
+            'service_variant_id.unique' =>
+                'Ya existe un precio base para esta variante y moneda.',
 
-            'active.boolean' => 'El campo activo debe ser verdadero o falso.',
+            'currency_id.required' =>
+                'La moneda es obligatoria.',
+
+            'currency_id.exists' =>
+                'La moneda seleccionada no es válida.',
+
+            'cost.required' =>
+                'El costo es obligatorio.',
+
+            'cost.numeric' =>
+                'El costo debe ser numérico.',
+
+            'cost.min' =>
+                'El costo no puede ser negativo.',
+
+            'sale_price.required' =>
+                'El precio base es obligatorio.',
+
+            'sale_price.numeric' =>
+                'El precio base debe ser numérico.',
+
+            'sale_price.min' =>
+                'El precio base no puede ser negativo.',
+
+            'active.boolean' =>
+                'El campo activo debe ser verdadero o falso.',
         ];
     }
 }

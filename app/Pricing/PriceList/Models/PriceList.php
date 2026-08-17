@@ -79,7 +79,7 @@ class PriceList extends Model
 
     public function priceListItems(): HasMany
     {
-        return $this->hasMany(PriceListItem::class);
+        return $this->hasMany(PriceListItem::class,'price_list_id');
     }
 
     /*
