@@ -26,7 +26,7 @@ class Quotation extends Model
         'uuid',
         'code',
         'customer_id',
-        'price_list_id',
+        //'price_list_id',
         'currency_id',
         'quotation_status_id',
         'exchange_rate',
@@ -80,10 +80,10 @@ class Quotation extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function priceList()
-    {
-        return $this->belongsTo(PriceList::class);
-    }
+    // public function priceList()
+    // {
+    //     return $this->belongsTo(PriceList::class);
+    // }
 
     public function status()
     {

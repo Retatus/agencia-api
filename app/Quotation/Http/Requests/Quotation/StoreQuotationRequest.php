@@ -17,237 +17,394 @@ class StoreQuotationRequest extends FormRequest
 
             /*
             |--------------------------------------------------------------------------
-            | Cabecera
+            | HEADER
             |--------------------------------------------------------------------------
             */
 
-            'customer_id' => ['required','exists:customers,id'],
+            'customer_id' => [
+                'required',
+                'integer',
+                'exists:customers,id',
+            ],
 
-            'currency_id' => ['required','exists:currencies,id'],
+            'currency_id' => [
+                'required',
+                'integer',
+                'exists:currencies,id',
+            ],
 
-            'price_list_id' => ['required','exists:price_lists,id'],
+            'quotation_status_id' => [
+                'required',
+                'integer',
+                'exists:quotation_statuses,id',
+            ],
 
-            'travel_date' => ['required','date'],
+            'exchange_rate' => [
+                'required',
+                'numeric',
+                'gt:0',
+            ],
 
-            'valid_until' => ['required','date'],
+            'travel_date' => [
+                'required',
+                'date',
+            ],
 
-            'notes' => ['nullable','string'],
+            'valid_until' => [
+                'nullable',
+                'date',
+            ],
 
-            /*
-            |--------------------------------------------------------------------------
-            | Pasajeros
-            |--------------------------------------------------------------------------
-            */
-
-            'passengers' => ['required','array','min:1'],
-
-            'passengers.*.passenger_type_id'
-                => ['required','exists:passenger_types,id'],
-
-            'passengers.*.first_name'
-                => ['required','string','max:100'],
-
-            'passengers.*.last_name'
-                => ['required','string','max:100'],
-
-            'passengers.*.birth_date'
-                => ['nullable','date'],
-
-            'passengers.*.document_number'
-                => ['nullable','string','max:30'],
-
-            'passengers.*.nationality'
-                => ['nullable','string','max:100'],
-
-            'passengers.*.email'
-                => ['nullable','email'],
-
-            'passengers.*.phone'
-                => ['nullable','string','max:50'],
-
-            /*
-            |--------------------------------------------------------------------------
-            | Itinerarios
-            |--------------------------------------------------------------------------
-            */
-            'itineraries' => ['required','array','min:1'],
-
-            'itineraries.*.day_number'
-                => ['required','numeric','min:1'],
-
-            'itineraries.*.travel_date'
-                => ['sometimes','date'],
-
-            'itineraries.*.title'
-                => ['sometimes','string','max:255'],
-
-            'itineraries.*.description'
-                => ['nullable','string','max:255'],
-
-            'itineraries.*.sort_order'
-                => ['required','numeric','min:1'],
-
-            'itineraries.*.subtotal'
-                => ['required','numeric','min:0'],
-
-            /*
-            |--------------------------------------------------------------------------
-            | Servicios
-            |--------------------------------------------------------------------------
-            */
-
-            'itineraries.*.items' => ['required','array','min:1'],
-
-            //'itineraries.*.items.*.uuid' => ['required','uuid'],
-
-            'itineraries.*.items.*.service_id'
-                => ['nullable','exists:services,id'],
-
-            'itineraries.*.items.*.service_variant_id'
-                => ['nullable','exists:service_variants,id'],
-
-            'itineraries.*.items.*.item_type'
-                => ['required','in:CATALOG,CUSTOM'],
-
-            'itineraries.*.items.*.calculation_type' => [
+            'notes' => [
                 'nullable',
                 'string',
-                'in:generic,accommodation,transport',
             ],
 
-            'itineraries.*.items.*.group_uuid' => [
+            'discount' => [
                 'nullable',
-                'uuid',
+                'numeric',
+                'min:0',
             ],
 
-            'itineraries.*.items.*.group_index' => [
+            'tax' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'active' => [
+                'sometimes',
+                'boolean',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | PASSENGERS
+            |--------------------------------------------------------------------------
+            */
+
+            'passengers' => [
+                'nullable',
+                'array',
+            ],
+
+            'passengers.*.uuid' => [
+                'nullable',
+                'string',
+            ],
+
+            'passengers.*.passenger_type_id' => [
+                'required',
+                'integer',
+                'exists:passenger_types,id',
+            ],
+
+            'passengers.*.first_name' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'passengers.*.last_name' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'passengers.*.birth_date' => [
+                'nullable',
+                'date',
+            ],
+
+            'passengers.*.nationality' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'passengers.*.document_number' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'passengers.*.email' => [
+                'nullable',
+                'email',
+                'max:150',
+            ],
+
+            'passengers.*.phone' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+
+            'passengers.*.sort_order' => [
                 'nullable',
                 'integer',
                 'min:1',
             ],
 
-            'itineraries.*.items.*.name'
-                => ['required','string','max:255'],
+            'passengers.*.active' => [
+                'sometimes',
+                'boolean',
+            ],
 
-            'itineraries.*.items.*.variant_name'
-                => ['nullable','string','max:255'],
+            /*
+            |--------------------------------------------------------------------------
+            | ITINERARIES
+            |--------------------------------------------------------------------------
+            */
 
-            'itineraries.*.items.*.description'
-                => ['nullable','string','max:255'],
+            'itineraries' => [
+                'nullable',
+                'array',
+            ],
 
-            'itineraries.*.items.*.duration'
-                => ['nullable','numeric','min:1'],
+            'itineraries.*.uuid' => [
+                'nullable',
+                'string',
+            ],
 
-            'itineraries.*.items.*.quantity'
-                => ['required','numeric','min:1'],
+            'itineraries.*.day_number' => [
+                'required',
+                'integer',
+                'min:1',
+            ],
 
-            'itineraries.*.items.*.unit_cost'
-                => ['required','numeric','min:0'],
+            'itineraries.*.travel_date' => [
+                'nullable',
+                'date',
+            ],
 
-            'itineraries.*.items.*.price_id'
-                => ['nullable','exists:prices,id'],
+            'itineraries.*.title' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
-            'itineraries.*.items.*.unit_price'
-                => ['required','numeric','min:0'],
+            'itineraries.*.description' => [
+                'nullable',
+                'string',
+            ],
 
-            'itineraries.*.items.*.subtotal'
-                => ['required','numeric','min:0'],
+            'itineraries.*.sort_order' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
 
-            'itineraries.*.items.*.sort_order'
-                => ['required','numeric','min:1'],
+            /*
+            |--------------------------------------------------------------------------
+            | ITEMS
+            |--------------------------------------------------------------------------
+            */
 
-            'itineraries.*.items.*.notes'
-                => ['nullable','string','max:255'],
+            'itineraries.*.items' => [
+                'nullable',
+                'array',
+            ],
 
-            'itineraries.*.items.*.active'
-                => ['required','boolean'],
+            'itineraries.*.items.*.uuid' => [
+                'nullable',
+                'string',
+            ],
+
+            'itineraries.*.items.*.item_type' => [
+                'required',
+                'string',
+                'in:CATALOG,CUSTOM',
+            ],
+
+            'itineraries.*.items.*.service_id' => [
+                'nullable',
+                'integer',
+                'exists:services,id',
+            ],
+
+            'itineraries.*.items.*.service_variant_id' => [
+                'nullable',
+                'integer',
+                'exists:service_variants,id',
+            ],
+
+            'itineraries.*.items.*.name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'itineraries.*.items.*.variant_name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'itineraries.*.items.*.description' => [
+                'nullable',
+                'string',
+            ],
+
+            'itineraries.*.items.*.duration' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'itineraries.*.items.*.quantity' => [
+                'required',
+                'numeric',
+                'gt:0',
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | SOLO RELEVANTES PARA CUSTOM
+            |--------------------------------------------------------------------------
+            */
+
+            'itineraries.*.items.*.unit_cost' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'itineraries.*.items.*.unit_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'itineraries.*.items.*.sort_order' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
+
+            'itineraries.*.items.*.notes' => [
+                'nullable',
+                'string',
+            ],
+
+            'itineraries.*.items.*.active' => [
+                'sometimes',
+                'boolean',
+            ],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+
+                foreach (
+                    $this->input('itineraries', [])
+                    as $itineraryIndex => $itinerary
+                ) {
+
+                    foreach (
+                        $itinerary['items'] ?? []
+                        as $itemIndex => $item
+                    ) {
+
+                        $path =
+                            "itineraries.$itineraryIndex.items.$itemIndex";
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CATALOG
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (
+                            ($item['item_type'] ?? null)
+                            === 'CATALOG'
+                        ) {
+                            if (
+                                empty(
+                                    $item['service_variant_id']
+                                )
+                            ) {
+                                $validator
+                                    ->errors()
+                                    ->add(
+                                        "$path.service_variant_id",
+                                        'La variante es obligatoria para un servicio de catálogo.'
+                                    );
+                            }
+                        }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | CUSTOM
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (
+                            ($item['item_type'] ?? null)
+                            === 'CUSTOM'
+                        ) {
+                            if (
+                                ! array_key_exists(
+                                    'unit_price',
+                                    $item
+                                ) ||
+                                $item['unit_price'] === null
+                            ) {
+                                $validator
+                                    ->errors()
+                                    ->add(
+                                        "$path.unit_price",
+                                        'El precio de venta es obligatorio para un ítem manual.'
+                                    );
+                            }
+                        }
+                    }
+                }
+            },
         ];
     }
 
     public function messages(): array
     {
         return [
-            'customer_id.required' => 'El cliente es obligatorio.',
-            'customer_id.exists' => 'El cliente no existe.',
+            'customer_id.required' =>
+                'El cliente es obligatorio.',
 
-            'currency_id.required' => 'La moneda es obligatoria.',
-            'currency_id.exists' => 'La moneda no existe.',
+            'currency_id.required' =>
+                'La moneda es obligatoria.',
 
-            'price_list_id.required' => 'La lista de precios es obligatoria.',
-            'price_list_id.exists' => 'La lista de precios no existe.',
+            'quotation_status_id.required' =>
+                'El estado de la cotización es obligatorio.',
 
-            'travel_date.required' => 'La fecha de viaje es obligatoria.',
-            'travel_date.date' => 'La fecha de viaje debe ser una fecha válida.',
+            'travel_date.required' =>
+                'La fecha de viaje es obligatoria.',
 
-            'valid_until.required' => 'La fecha de vigencia es obligatoria.',
-            'valid_until.date' => 'La fecha de vigencia debe ser una fecha válida.',
+            'exchange_rate.gt' =>
+                'El tipo de cambio debe ser mayor que cero.',
 
-            'passengers.required' => 'Debe agregar al menos un pasajero.',
-            'passengers.array' => 'Los pasajeros deben ser un arreglo.',
-            'passengers.min' => 'Debe agregar al menos un pasajero.',
+            'passengers.*.passenger_type_id.required' =>
+                'El tipo de pasajero es obligatorio.',
 
-            'itineraries.required' => 'Debe agregar al menos un itinerario.',
-            'itineraries.array' => 'Los itinerarios deben ser un arreglo.',
-            'itineraries.min' => 'Debe agregar al menos un itinerario.',
+            'itineraries.*.day_number.required' =>
+                'El número de día es obligatorio.',
 
-            'itineraries.*.day_number.required' => 'El número de día es obligatorio.',
-            'itineraries.*.day_number.numeric' => 'El número de día debe ser un número.',
-            'itineraries.*.day_number.min' => 'El número de día debe ser mayor o igual a 1.',
+            'itineraries.*.items.*.item_type.required' =>
+                'El tipo de ítem es obligatorio.',
 
-            'itineraries.*.travel_date.required' => 'La fecha de viaje es obligatoria.',
-            'itineraries.*.travel_date.date' => 'La fecha de viaje debe ser una fecha válida.',
+            'itineraries.*.items.*.item_type.in' =>
+                'El tipo de ítem debe ser CATALOG o CUSTOM.',
 
-            'itineraries.*.title.required' => 'El título es obligatorio.',
-            'itineraries.*.title.string' => 'El título debe ser una cadena de texto.',
-            'itineraries.*.title.max' => 'El título debe tener menos de 255 caracteres.',
+            'itineraries.*.items.*.name.required' =>
+                'El nombre del ítem es obligatorio.',
 
-            'itineraries.*.description.string' => 'La descripción debe ser una cadena de texto.',
-            'itineraries.*.description.max' => 'La descripción debe tener menos de 255 caracteres.',
+            'itineraries.*.items.*.quantity.required' =>
+                'La cantidad es obligatoria.',
 
-            'itineraries.*.sort_order.required' => 'El orden es obligatorio.',
-            'itineraries.*.sort_order.numeric' => 'El orden debe ser un número.',
-            'itineraries.*.sort_order.min' => 'El orden debe ser mayor o igual a 1.',
-
-            'itineraries.*.items.required' => 'Debe agregar al menos un servicio ok.',
-            'itineraries.*.items.array' => 'Los servicios deben ser un arreglo.',
-            'itineraries.*.items.min' => 'Debe agregar al menos un servicio.',
-
-            'itineraries.*.items.*.uuid.required' => 'El UUID es obligatorio.',
-            'itineraries.*.items.*.uuid.uuid' => 'El UUID debe ser un UUID.',            
-
-            'itineraries.*.items.*.name.required' => 'El nombre es obligatorio.',
-            'itineraries.*.items.*.name.string' => 'El nombre debe ser una cadena de texto.',
-            'itineraries.*.items.*.name.max' => 'El nombre debe tener menos de 255 caracteres.',
-
-            'itineraries.*.items.*.description.string' => 'La descripción debe ser una cadena de texto.',
-            'itineraries.*.items.*.description.max' => 'La descripción debe tener menos de 255 caracteres.',
-
-            'itineraries.*.items.*.unit_cost.required' => 'El costo unitario es obligatorio.',
-            'itineraries.*.items.*.unit_cost.numeric' => 'El costo unitario debe ser un número.',
-            'itineraries.*.items.*.unit_cost.min' => 'El costo unitario debe ser mayor o igual a 0.',
-
-            'itineraries.*.items.*.unit_price.required' => 'El precio unitario es obligatorio.',
-            'itineraries.*.items.*.unit_price.numeric' => 'El precio unitario debe ser un número.',
-            'itineraries.*.items.*.unit_price.min' => 'El precio unitario debe ser mayor o igual a 0.',
-
-            'itineraries.*.items.*.quantity.required' => 'La cantidad es obligatoria.',
-            'itineraries.*.items.*.quantity.numeric' => 'La cantidad debe ser un número.',
-            'itineraries.*.items.*.quantity.min' => 'La cantidad debe ser mayor o igual a 1.',
-
-            'itineraries.*.items.*.sort_order.required' => 'El orden es obligatorio.',
-            'itineraries.*.items.*.sort_order.numeric' => 'El orden debe ser un número.',
-            'itineraries.*.items.*.sort_order.min' => 'El orden debe ser mayor o igual a 1.',
-
-            'itineraries.*.items.*.service_variant_id.required' => 'El servicio es obligatorio.',
-            'itineraries.*.items.*.service_variant_id.exists' => 'El servicio no existe.',
-
-            'itineraries.*.items.*.price_id.required' => 'El precio es obligatorio.',
-            'itineraries.*.items.*.price_id.exists' => 'El precio no existe.',
-
-            'itineraries.*.items.*.notes.string' => 'Las notas deben ser una cadena de texto.',
-            'itineraries.*.items.*.notes.max' => 'Las notas deben tener menos de 255 caracteres.',
-
-            'itineraries.*.items.*.active.boolean' => 'El campo activo debe ser verdadero o falso.',
+            'itineraries.*.items.*.quantity.gt' =>
+                'La cantidad debe ser mayor que cero.',
         ];
     }
 }

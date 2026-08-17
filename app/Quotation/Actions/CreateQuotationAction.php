@@ -124,7 +124,7 @@ class CreateQuotationAction
                     ->load([
                         'customer',
                         'currency',
-                        'priceList',
+                        //'priceList',
                         'status',
 
                         'itineraries',

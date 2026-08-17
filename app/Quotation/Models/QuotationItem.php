@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use App\Models\ServiceVariant;
-use App\Pricing\Price\Models\Price;
+
 use App\Pricing\BasePrice\Models\BasePrice;
 use App\Pricing\PriceList\Models\PriceList;
 use App\Pricing\PriceListItem\Models\PriceListItem;
@@ -27,21 +27,42 @@ class QuotationItem extends Model
 
     protected $fillable = [
         'uuid',
+
         'quotation_itinerary_id',
+
         'service_id',
         'service_variant_id',
+
         'item_type',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculation Engine
+        |--------------------------------------------------------------------------
+        */
 
         'calculation_type',
         'group_uuid',
         'group_index',
 
+        /*
+        |--------------------------------------------------------------------------
+        | Descripción
+        |--------------------------------------------------------------------------
+        */
+
         'name',
         'variant_name',
         'description',
+
         'duration',
         'quantity',
-        'price_id',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Pricing Traceability
+        |--------------------------------------------------------------------------
+        */
 
         'base_price_id',
         'price_list_id',
@@ -49,19 +70,38 @@ class QuotationItem extends Model
 
         'pricing_source',
 
+        /*
+        |--------------------------------------------------------------------------
+        | Pricing Snapshot
+        |--------------------------------------------------------------------------
+        */
+
         'base_cost',
         'base_price',
 
         'adjustment_type',
         'adjustment_value',
 
+        /*
+        |--------------------------------------------------------------------------
+        | Precio final
+        |--------------------------------------------------------------------------
+        */
+
         'unit_cost',
         'unit_price',
         'subtotal',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Otros
+        |--------------------------------------------------------------------------
+        */
+
         'sort_order',
         'notes',
         'active',
-    ];  
+    ];
 
     protected $casts = [
         'duration' => 'integer',
@@ -69,22 +109,20 @@ class QuotationItem extends Model
         'quantity' => 'decimal:2',
 
         'unit_cost' => 'decimal:2',
-
         'unit_price' => 'decimal:2',
-
         'subtotal' => 'decimal:2',
 
-        'group_index' => 'integer',
+        'base_cost' => 'decimal:2',
+        'base_price' => 'decimal:2',
 
+        'adjustment_value' => 'decimal:4',
+
+        'group_index' => 'integer',
         'sort_order' => 'integer',
 
         'active' => 'boolean',
 
         'calculated_at' => 'datetime',
-
-        'base_cost' => 'decimal:2',
-        'base_price' => 'decimal:2',
-        'adjustment_value' => 'decimal:4',
     ];
 
     /**
@@ -113,17 +151,15 @@ class QuotationItem extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function serviceVariant()
+    public function serviceVariant(): BelongsTo
     {
-        return $this->belongsTo(ServiceVariant::class);
+        return $this->belongsTo(
+            ServiceVariant::class,
+            'service_variant_id'
+        );
     }
 
-    public function price()
-    {
-        return $this->belongsTo(Price::class);
-    }
-
-    public function itinerary()
+    public function itinerary(): BelongsTo
     {
         return $this->belongsTo(
             QuotationItinerary::class,
@@ -131,19 +167,34 @@ class QuotationItem extends Model
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pricing Relationships
+    |--------------------------------------------------------------------------
+    */
+
     public function basePrice(): BelongsTo
     {
-        return $this->belongsTo(BasePrice::class);
+        return $this->belongsTo(
+            BasePrice::class,
+            'base_price_id'
+        );
     }
 
     public function priceList(): BelongsTo
     {
-        return $this->belongsTo(PriceList::class);
+        return $this->belongsTo(
+            PriceList::class,
+            'price_list_id'
+        );
     }
 
     public function priceListItem(): BelongsTo
     {
-        return $this->belongsTo(PriceListItem::class);
+        return $this->belongsTo(
+            PriceListItem::class,
+            'price_list_item_id'
+        );
     }
     
      /*
@@ -170,7 +221,19 @@ class QuotationItem extends Model
         return $this->calculation_type ===
             'transport';
     }
-    
+
+    public function isManual(): bool
+    {
+        return $this->pricing_source ===
+            'MANUAL';
+    }
+
+    public function usesPriceList(): bool
+    {
+        return $this->pricing_source ===
+            'PRICE_LIST';
+    }
+
     /*
     |--------------------------------------------------------------------------
     | History, Audit devuelve el root entity quotation

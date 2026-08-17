@@ -3,7 +3,6 @@
 namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
-use App\Quotation\Models\QuotationItinerary;
 
 class CreateQuotationItinerariesAction
 {

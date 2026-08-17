@@ -2,151 +2,220 @@
 
 namespace App\Quotation\Actions;
 
-use App\Quotation\Models\QuotationItinerary;
+use App\Pricing\Resolution\DTOs\PriceContext;
+use App\Pricing\Resolution\Services\PriceResolver;
+use App\Quotation\Models\Quotation;
+use Carbon\Carbon;
 
 class UpdateQuotationItemsAction
 {
+    public function __construct(
+        private readonly PriceResolver $priceResolver,
+    ) {
+    }
+
     public function execute(
-        QuotationItinerary $itinerary,
+        Quotation $quotation,
         array $items
     ): void {
-
         /*
         |--------------------------------------------------------------------------
-        | IDs recibidos
-        |--------------------------------------------------------------------------
-        */
-
-        $receivedItemIds = collect($items)
-            ->pluck('id')
-            ->filter()
-            ->values()
-            ->all();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Buscar items eliminados
-        |--------------------------------------------------------------------------
-        */
-
-        $itemsToDelete = $itinerary
-            ->items()
-            ->when(
-                !empty($receivedItemIds),
-
-                fn ($query) =>
-                    $query->whereNotIn(
-                        'id',
-                        $receivedItemIds
-                    )
-            )
-            ->when(
-                empty($receivedItemIds),
-
-                fn ($query) =>
-                    $query
-            )
-            ->get();
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SoftDelete individual
+        | Estrategia actual
         |--------------------------------------------------------------------------
         |
-        | IMPORTANTE:
+        | Sincronizamos los items recibidos.
+        | Si ya tienes una estrategia distinta de sync, conserva esa parte.
         |
-        | No utilizar:
-        |
-        | $query->delete()
-        |
-        | porque no dispara eventos Eloquent.
-        |
-        | Utilizamos:
-        |
-        | $item->delete()
-        |
-        | para que HasHistory registre deleted.
-        |
-        */
-
-        foreach ($itemsToDelete as $item) {
-
-            $item->delete();
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Crear / actualizar items
-        |--------------------------------------------------------------------------
         */
 
         foreach ($items as $itemData) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | ID
-            |--------------------------------------------------------------------------
-            */
-
-            $id = $itemData['id'] ?? null;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Limpiar datos
-            |--------------------------------------------------------------------------
-            */
-
-            unset(
-                //$itemData['id'],
-                $itemData['uuid'],
-                $itemData['quotation_itinerary_id']
-            );
-
+            $item = $quotation
+                ->items()
+                ->where(
+                    'uuid',
+                    $itemData['uuid'] ?? null
+                )
+                ->first();
 
             /*
             |--------------------------------------------------------------------------
-            | Actualizar item existente
+            | ITEM MANUAL
             |--------------------------------------------------------------------------
             */
 
-            if ($id) {
+            if (
+                ($itemData['item_type'] ?? null)
+                === 'CUSTOM'
+            ) {
+                $data =
+                    $this->buildManualItem(
+                        $itemData
+                    );
 
-                $item = $itinerary
-                    ->items()
-                    ->where('id', $id)
-                    ->first();
-
-                /*
-                | El item no pertenece al itinerario.
-                */
-
-                if (!$item) {
-                    continue;
+                if ($item) {
+                    $item->update($data);
+                } else {
+                    $quotation
+                        ->items()
+                        ->create($data);
                 }
-
-                $item->update(
-                    $itemData
-                );
 
                 continue;
             }
 
-
             /*
             |--------------------------------------------------------------------------
-            | Crear nuevo item
+            | FECHA DEL SERVICIO
             |--------------------------------------------------------------------------
             */
 
-            $itinerary
-                ->items()
-                ->create(
-                    $itemData
+            $serviceDate =
+                $itemData['travel_date']
+                ?? $quotation->travel_date;
+
+            /*
+            |--------------------------------------------------------------------------
+            | RESOLVER PRECIO
+            |--------------------------------------------------------------------------
+            */
+
+            $resolved =
+                $this->priceResolver->resolve(
+                    new PriceContext(
+                        serviceVariantId:
+                            $itemData[
+                                'service_variant_id'
+                            ],
+
+                        date:
+                            Carbon::parse(
+                                $serviceDate
+                            ),
+                    )
                 );
+
+            $quantity =
+                (float) (
+                    $itemData['quantity']
+                    ?? 1
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | PAYLOAD
+            |--------------------------------------------------------------------------
+            */
+
+            $data = [
+                ...$itemData,
+
+                'base_price_id' =>
+                    $resolved->basePriceId,
+
+                'price_list_id' =>
+                    $resolved->priceListId,
+
+                'price_list_item_id' =>
+                    $resolved->priceListItemId,
+
+                'pricing_source' =>
+                    $resolved->pricingSource,
+
+                'base_cost' =>
+                    $resolved->baseCost,
+
+                'base_price' =>
+                    $resolved->basePrice,
+
+                'adjustment_type' =>
+                    $resolved->adjustmentType,
+
+                'adjustment_value' =>
+                    $resolved->adjustmentValue,
+
+                'unit_cost' =>
+                    $resolved->finalCost,
+
+                'unit_price' =>
+                    $resolved->finalPrice,
+
+                'subtotal' =>
+                    $quantity
+                    * $resolved->finalPrice,
+            ];
+
+            /*
+            |--------------------------------------------------------------------------
+            | UPDATE / CREATE
+            |--------------------------------------------------------------------------
+            */
+
+            if ($item) {
+                $item->update($data);
+            } else {
+                $quotation
+                    ->items()
+                    ->create($data);
+            }
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | MANUAL
+    |--------------------------------------------------------------------------
+    */
+
+    private function buildManualItem(
+        array $itemData
+    ): array {
+        $quantity =
+            (float) (
+                $itemData['quantity']
+                ?? 1
+            );
+
+        $unitPrice =
+            (float) (
+                $itemData['unit_price']
+                ?? 0
+            );
+
+        $unitCost =
+            (float) (
+                $itemData['unit_cost']
+                ?? 0
+            );
+
+        return [
+            ...$itemData,
+
+            'base_price_id' => null,
+
+            'price_list_id' => null,
+
+            'price_list_item_id' => null,
+
+            'pricing_source' => 'MANUAL',
+
+            'base_cost' => null,
+
+            'base_price' => null,
+
+            'adjustment_type' => null,
+
+            'adjustment_value' => null,
+
+            'unit_cost' =>
+                $unitCost,
+
+            'unit_price' =>
+                $unitPrice,
+
+            'subtotal' =>
+                $quantity
+                * $unitPrice,
+        ];
     }
 }

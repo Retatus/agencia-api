@@ -31,7 +31,7 @@ class UpdateQuotationHeaderAction
 
         $fields = [
             'customer_id',
-            'price_list_id',
+            //'price_list_id',
             'currency_id',
             'quotation_status_id',
             'exchange_rate',

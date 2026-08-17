@@ -2,112 +2,149 @@
 
 namespace App\Quotation\Actions;
 
-use Illuminate\Support\Facades\Log;
-
+use App\Pricing\Resolution\DTOs\PriceContext;
+use App\Pricing\Resolution\Services\PriceResolver;
 use App\Quotation\Models\QuotationItinerary;
+use Carbon\Carbon;
 
 class CreateQuotationItemsAction
 {
+    public function __construct(
+        private readonly PriceResolver $priceResolver,
+    ) {
+    }
+
     public function execute(
         QuotationItinerary $itinerary,
         array $items
     ): void {
 
-        Log::debug('items', ($items));
         foreach ($items as $itemData) {
 
-            $quantity = (float) ($itemData['quantity'] ?? 1);
-            $unitCost = (float) ($itemData['unit_cost'] ?? 0);
-            $unitPrice = (float) ($itemData['unit_price'] ?? 0);
-            $calculationType = $itemData['calculation_type'] ?? 'generic';
-            $duration =  max( 1, (int) ($itemData['duration'] ?? 1 ));
+            if (
+                ($itemData['item_type'] ?? null)
+                === 'CUSTOM'
+            ) {
+                $itinerary
+                    ->items()
+                    ->create(
+                        $this->buildManualItem(
+                            $itemData
+                        )
+                    );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Crear item
-            |--------------------------------------------------------------------------
-            |
-            | El UUID definitivo lo genera Laravel mediante HasUuids.
-            |
-            | No utilizamos el UUID enviado por Vue.
-            |
-            */
+                continue;
+            }
 
-            $itinerary->items()->create([
-                'quotation_itinerary_id' => $itinerary->id,
+            $serviceDate =
+                $itemData['travel_date']
+                ?? $itinerary->travel_date
+                ?? $itinerary->quotation->travel_date;
 
-                'service_id'         => $itemData['service_id'] ?? null,
-                'service_variant_id' => $itemData['service_variant_id'] ?? null,
-                'price_id'           => $itemData['price_id'] ?? null,
+            $resolved =
+                $this->priceResolver->resolve(
+                    new PriceContext(
+                        serviceVariantId:
+                            $itemData['service_variant_id'],
 
-                'item_type'          => $itemData['item_type'] ?? 'CUSTOM',
-                'calculation_type'   => $calculationType,
-                'group_uuid'         => $itemData['group_uuid'] ?? null,
-                'group_index'        => $itemData['group_index'] ?? null,
+                        date:
+                            Carbon::parse(
+                                $serviceDate
+                            )
+                    )
+                );
 
-                'name'               => $itemData['name'] ?? null,
-                'variant_name'       => $itemData['variant_name'] ?? null,
-                'description'        => $itemData['description'] ?? null,
-                'duration'           => $duration,
+            $quantity =
+                (float) (
+                    $itemData['quantity']
+                    ?? 1
+                );
 
-                'quantity'           => $quantity,
-                'unit_cost'          => $unitCost,
-                'unit_price'         => $unitPrice,
+            $itinerary
+                ->items()
+                ->create([
+                    ...$itemData,
 
-                'subtotal'           => $this->calculateSubtotal(
-                    calculationType:
-                        $calculationType,
+                    'base_price_id' =>
+                        $resolved->basePriceId,
 
-                    quantity:
-                        $quantity,
+                    'price_list_id' =>
+                        $resolved->priceListId,
 
-                    unitPrice:
-                        $unitPrice,
+                    'price_list_item_id' =>
+                        $resolved->priceListItemId,
 
-                    duration:
-                        $duration
-                ),
+                    'pricing_source' =>
+                        $resolved->pricingSource,
 
-                'sort_order'         => $itemData['sort_order'] ?? 1,
+                    'base_cost' =>
+                        $resolved->baseCost,
 
-                'notes'              => $itemData['notes'] ?? null,
+                    'base_price' =>
+                        $resolved->basePrice,
 
-                'active'             => $itemData['active'] ?? true,
-            ]);
+                    'adjustment_type' =>
+                        $resolved->adjustmentType,
+
+                    'adjustment_value' =>
+                        $resolved->adjustmentValue,
+
+                    'unit_cost' =>
+                        $resolved->finalCost,
+
+                    'unit_price' =>
+                        $resolved->finalPrice,
+
+                    'subtotal' =>
+                        $quantity
+                        * $resolved->finalPrice,
+                ]);
         }
     }
 
-    protected function calculateSubtotal(
-        string $calculationType,
-        float $quantity,
-        float $unitPrice,
-        int $duration
-    ): float {
+    /*
+    |--------------------------------------------------------------------------
+    | MANUAL ITEM
+    |--------------------------------------------------------------------------
+    */
 
-        /*
-        |--------------------------------------------------------------------------
-        | Alojamiento
-        |--------------------------------------------------------------------------
-        */
+    private function buildManualItem(
+        array $itemData
+    ): array {
+        $quantity =
+            (float) (
+                $itemData['quantity']
+                ?? 1
+            );
 
-        if (
-            $calculationType ===
-            'accommodation'
-        ) {
-            return
+        $unitPrice =
+            (float) (
+                $itemData['unit_price']
+                ?? 0
+            );
+
+        return [
+            ...$itemData,
+
+            'base_price_id' => null,
+            //'price_list_id' => null,
+            'price_list_item_id' => null,
+
+            'pricing_source' =>
+                'MANUAL',
+
+            'base_cost' => null,
+            'base_price' => null,
+
+            'adjustment_type' => null,
+            'adjustment_value' => null,
+
+            'unit_price' =>
+                $unitPrice,
+
+            'subtotal' =>
                 $quantity
-                * $unitPrice
-                * $duration;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Generic / Transport
-        |--------------------------------------------------------------------------
-        */
-
-        return
-            $quantity
-            * $unitPrice;
+                * $unitPrice,
+        ];
     }
 }
