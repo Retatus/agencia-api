@@ -10,10 +10,18 @@ use App\Pricing\PriceListItem\Requests\StorePriceListItemRequest;
 use App\Pricing\PriceListItem\Requests\UpdatePriceListItemRequest;
 use App\Pricing\PriceListItem\Resources\PriceListItemResource;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 
 class PriceListItemController extends Controller
 {
+    protected array $relations = [
+        'priceList',
+        'serviceVariant.service',
+        'serviceVariant.basePrice.currency',
+    ];
+
     /*
     |--------------------------------------------------------------------------
     | INDEX
@@ -21,17 +29,120 @@ class PriceListItemController extends Controller
     */
 
     public function index(
+        Request $request,
         PriceList $priceList
     ): AnonymousResourceCollection {
 
-        $items = $priceList
-            ->items()
-            ->with([
+        $request->validate([
+            'search' =>
+                'nullable|string|max:100',
+
+            'active' =>
+                'nullable|boolean',
+
+            'adjustment_type' => [
+                'nullable',
+                'string',
+                'in:PERCENT,FIXED_AMOUNT,FIXED_PRICE',
+            ],
+
+            'per_page' =>
+                'nullable|integer|min:1|max:100',
+        ]);
+
+        $query = $priceList
+            ->priceListItems()
+            ->with(
+                $this->relations
+            );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('search')) {
+
+            $search =
+                $request->input('search');
+
+            $query->whereHas(
                 'serviceVariant',
-                'priceList',
-            ])
+                function ($variantQuery) use ($search) {
+
+                    $variantQuery
+                        ->where(
+                            'code',
+                            'like',
+                            "%{$search}%"
+                        )
+                        ->orWhere(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        )
+                        ->orWhereHas(
+                            'service',
+                            function ($serviceQuery) use ($search) {
+
+                                $serviceQuery
+                                    ->where(
+                                        'code',
+                                        'like',
+                                        "%{$search}%"
+                                    )
+                                    ->orWhere(
+                                        'name',
+                                        'like',
+                                        "%{$search}%"
+                                    );
+                            }
+                        );
+                }
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Adjustment Type
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $request->filled(
+                'adjustment_type'
+            )
+        ) {
+            $query->where(
+                'adjustment_type',
+                $request->input(
+                    'adjustment_type'
+                )
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Active
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->has('active')) {
+            $query->where(
+                'active',
+                $request->boolean('active')
+            );
+        }
+
+        $items = $query
             ->orderBy('service_variant_id')
-            ->get();
+            ->paginate(
+                $request->integer(
+                    'per_page',
+                    20
+                )
+            );
 
         return PriceListItemResource::collection(
             $items
@@ -47,48 +158,39 @@ class PriceListItemController extends Controller
     public function store(
         StorePriceListItemRequest $request,
         PriceList $priceList
-    ): PriceListItemResource|JsonResponse {
-        $data = $request->validated();
+    ): PriceListItemResource {
 
-        $variant = ServiceVariant::query()
-            ->with([
-                'service',
-                'basePrice',
-            ])
-            ->findOrFail(
-                $data['service_variant_id']
-            );
+        $data =
+            $request->validated();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Validar categoría
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            (int) $variant->service->service_category_id !==
-            (int) $priceList->service_category_id
-        ) {
-            return response()->json([
-                'message' => 'La variante no pertenece a la categoría de esta lista de precios.',
-            ], 422);
-        }
+        $variant =
+            ServiceVariant::query()
+                ->with([
+                    'service',
+                    'basePrice.currency',
+                ])
+                ->findOrFail(
+                    $data[
+                        'service_variant_id'
+                    ]
+                );
 
         /*
         |--------------------------------------------------------------------------
-        | Validar BasePrice
+        | BasePrice obligatorio
         |--------------------------------------------------------------------------
         */
 
         if (! $variant->basePrice) {
-            return response()->json([
-                'message' => 'La variante debe tener un precio base antes de agregar un ajuste.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'service_variant_id' =>
+                    'La variante debe tener un precio base antes de crear una regla comercial.',
+            ]);
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Evitar duplicado
+        | Duplicado
         |--------------------------------------------------------------------------
         */
 
@@ -101,19 +203,42 @@ class PriceListItemController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json([
-                'message' => 'Esta variante ya tiene una regla dentro de la lista de precios.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'service_variant_id' =>
+                    'Esta variante ya tiene una regla dentro de esta lista de precios.',
+            ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE
+        |--------------------------------------------------------------------------
+        |
+        | Aquí Laravel coloca automáticamente:
+        |
+        | price_list_id = $priceList->id
+        |
+        */
 
         $item = $priceList
             ->priceListItems()
-            ->create($data);
+            ->create([
+                'service_variant_id' =>
+                    $variant->id,
 
-        $item->load([
-            'serviceVariant',
-            'priceList',
-        ]);
+                'adjustment_type' =>
+                    $data['adjustment_type'],
+
+                'adjustment_value' =>
+                    $data['adjustment_value'],
+
+                'active' =>
+                    $data['active'] ?? true,
+            ]);
+
+        $item->load(
+            $this->relations
+        );
 
         return new PriceListItemResource(
             $item
@@ -130,47 +255,33 @@ class PriceListItemController extends Controller
         UpdatePriceListItemRequest $request,
         PriceList $priceList,
         PriceListItem $item
-    ): PriceListItemResource|JsonResponse {
-        /*
-        |--------------------------------------------------------------------------
-        | Validar pertenencia
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            (int) $item->price_list_id !==
-            (int) $priceList->id
-        ) {
-            return response()->json([
-                'message' => 'El item no pertenece a esta lista de precios.',
-            ], 404);
-        }
-
-        $data = $request->validated();
-
-        $variant = ServiceVariant::query()
-            ->with([
-                'service',
-                'basePrice',
-            ])
-            ->findOrFail(
-                $data['service_variant_id']
-            );
+    ): PriceListItemResource {
 
         /*
         |--------------------------------------------------------------------------
-        | Categoría
+        | Pertenencia
         |--------------------------------------------------------------------------
         */
 
-        if (
-            (int) $variant->service->service_category_id !==
-            (int) $priceList->service_category_id
-        ) {
-            return response()->json([
-                'message' => 'La variante no pertenece a la categoría de esta lista de precios.',
-            ], 422);
-        }
+        abort_unless(
+            (int) $item->price_list_id ===
+            (int) $priceList->id,
+            404
+        );
+
+        $data =
+            $request->validated();
+
+        $variant =
+            ServiceVariant::query()
+                ->with(
+                    'basePrice.currency'
+                )
+                ->findOrFail(
+                    $data[
+                        'service_variant_id'
+                    ]
+                );
 
         /*
         |--------------------------------------------------------------------------
@@ -179,9 +290,10 @@ class PriceListItemController extends Controller
         */
 
         if (! $variant->basePrice) {
-            return response()->json([
-                'message' => 'La variante debe tener un precio base.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'service_variant_id' =>
+                    'La variante debe tener un precio base.',
+            ]);
         }
 
         /*
@@ -196,25 +308,42 @@ class PriceListItemController extends Controller
                 'service_variant_id',
                 $variant->id
             )
-            ->where(
-                'id',
-                '<>',
+            ->whereKeyNot(
                 $item->id
             )
             ->exists();
 
         if ($exists) {
-            return response()->json([
-                'message' => 'Esta variante ya tiene otra regla en la lista.',
-            ], 422);
+            throw ValidationException::withMessages([
+                'service_variant_id' =>
+                    'Esta variante ya tiene otra regla dentro de esta lista.',
+            ]);
         }
 
-        $item->update($data);
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE
+        |--------------------------------------------------------------------------
+        */
 
-        $item->load([
-            'serviceVariant',
-            'priceList',
+        $item->update([
+            'service_variant_id' =>
+                $variant->id,
+
+            'adjustment_type' =>
+                $data['adjustment_type'],
+
+            'adjustment_value' =>
+                $data['adjustment_value'],
+
+            'active' =>
+                $data['active']
+                ?? $item->active,
         ]);
+
+        $item->load(
+            $this->relations
+        );
 
         return new PriceListItemResource(
             $item
@@ -231,19 +360,18 @@ class PriceListItemController extends Controller
         PriceList $priceList,
         PriceListItem $item
     ): JsonResponse {
-        if (
-            (int) $item->price_list_id !==
-            (int) $priceList->id
-        ) {
-            return response()->json([
-                'message' => 'El item no pertenece a esta lista de precios.',
-            ], 404);
-        }
+
+        abort_unless(
+            (int) $item->price_list_id ===
+            (int) $priceList->id,
+            404
+        );
 
         $item->delete();
 
         return response()->json([
-            'message' => 'Regla de precio eliminada correctamente.',
+            'message' =>
+                'Regla de precio eliminada correctamente.',
         ]);
     }
 }

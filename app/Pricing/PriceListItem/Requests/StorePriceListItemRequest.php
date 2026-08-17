@@ -17,33 +17,24 @@ class StorePriceListItemRequest extends FormRequest
         return [
             'service_variant_id' => [
                 'required',
+                'integer',
                 'exists:service_variants,id',
             ],
 
             'adjustment_type' => [
                 'required',
+                'string',
+
                 Rule::in([
-                    'OVERRIDE',
-                    'FIXED',
                     'PERCENTAGE',
+                    'FIXED',
+                    'OVERRIDE',
                 ]),
             ],
 
             'adjustment_value' => [
-                'nullable',
+                'required',
                 'numeric',
-            ],
-
-            'override_cost' => [
-                'nullable',
-                'numeric',
-                'min:0',
-            ],
-
-            'override_sale_price' => [
-                'nullable',
-                'numeric',
-                'min:0',
             ],
 
             'active' => [
@@ -53,35 +44,29 @@ class StorePriceListItemRequest extends FormRequest
         ];
     }
 
-    public function after(): array
+    public function messages(): array
     {
         return [
-            function ($validator) {
-                $type = $this->input('adjustment_type');
+            'service_variant_id.required' =>
+                'La variante es obligatoria.',
 
-                if ($type === 'OVERRIDE') {
-                    if ($this->input('override_sale_price') === null) {
-                        $validator->errors()->add(
-                            'override_sale_price',
-                            'El precio de venta override es obligatorio.'
-                        );
-                    }
-                }
+            'service_variant_id.exists' =>
+                'La variante seleccionada no existe.',
 
-                if (
-                    in_array(
-                        $type,
-                        ['FIXED', 'PERCENTAGE'],
-                        true
-                    ) &&
-                    $this->input('adjustment_value') === null
-                ) {
-                    $validator->errors()->add(
-                        'adjustment_value',
-                        'El valor del ajuste es obligatorio.'
-                    );
-                }
-            },
+            'adjustment_type.required' =>
+                'El tipo de ajuste es obligatorio.',
+
+            'adjustment_type.in' =>
+                'El tipo de ajuste seleccionado no es válido.',
+
+            'adjustment_value.required' =>
+                'El valor del ajuste es obligatorio.',
+
+            'adjustment_value.numeric' =>
+                'El valor del ajuste debe ser numérico.',
+
+            'active.boolean' =>
+                'El estado debe ser verdadero o falso.',
         ];
     }
 }

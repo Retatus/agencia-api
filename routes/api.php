@@ -29,6 +29,10 @@ use App\Audit\Http\Controllers\HistoryController;
 use App\Pricing\BasePrice\Controllers\BasePriceController;
 use App\Pricing\PriceListItem\Controllers\PriceListItemController;
 
+use App\Pricing\Resolution\DTOs\PriceContext;
+use App\Pricing\Resolution\Services\PriceResolver;
+use Carbon\Carbon;
+
 
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
@@ -60,17 +64,28 @@ Route::group([], function () {
 
     Route::prefix('pricing')->group(function () {
 
-    /*
+        Route::apiResource('base-prices', BasePriceController::class);
+        //Route::apiResource('price-list-items', PriceListItemController::class);
+
+        Route::prefix('price-lists/{priceList:uuid}/items')->group(function () {
+            Route::get('/', [PriceListItemController::class, 'index']);
+            Route::post('/', [PriceListItemController::class, 'store']);
+            Route::put('/{item}', [PriceListItemController::class, 'update']);
+            Route::patch('/{item}', [PriceListItemController::class, 'update']);
+            Route::delete('/{item}', [PriceListItemController::class, 'destroy']);    
+        });
+
+        /*
         |--------------------------------------------------------------------------
         | PRICE LIST ITEMS
         |--------------------------------------------------------------------------
         */
 
-        Route::get('price-lists/{priceList:uuid}/items',[PriceListItemController::class, 'index']);
-        Route::post('price-lists/{priceList:uuid}/items',[PriceListItemController::class, 'store']);
-        Route::put('price-lists/{priceList:uuid}/items/{item}',[PriceListItemController::class, 'update']);
-        Route::delete('price-lists/{priceList:uuid}/items/{item}',[PriceListItemController::class, 'destroy']);
-        
+        Route::get('price-lists/{priceList:uuid}/items', [PriceListItemController::class, 'index']);
+        Route::post('price-lists/{priceList:uuid}/items', [PriceListItemController::class, 'store']);
+        Route::put('price-lists/{priceList:uuid}/items/{item}', [PriceListItemController::class, 'update']);
+        Route::delete('price-lists/{priceList:uuid}/items/{item}', [PriceListItemController::class, 'destroy']);
+
         /*
         |--------------------------------------------------------------------------
         | PRICE LISTS
@@ -130,15 +145,21 @@ Route::group([], function () {
     });
 
 
-// GET    /api/v1/catalog/service-variants/{variant}/base-price
-// POST   /api/v1/catalog/service-variants/{variant}/base-price
-// PUT    /api/v1/catalog/service-variants/{variant}/base-price
-// DELETE /api/v1/catalog/service-variants/{variant}/base-price
+    Route::get('pricing/test-resolve/{variant}', 
+        function (int $variant, PriceResolver $resolver) {
+        $result = $resolver->resolve( new PriceContext(
+                serviceVariantId: $variant,
+                date: Carbon::parse(
+                    request('date')
+                ),
+            )
+        );
 
-// GET    /api/v1/pricing/price-lists/{priceList}/items
-// POST   /api/v1/pricing/price-lists/{priceList}/items
-// PUT    /api/v1/pricing/price-lists/{priceList}/items/{item}
-// DELETE /api/v1/pricing/price-lists/{priceList}/items/{item}
+        return response()->json(
+            $result->toArray()
+        );
+    }
+);
     
        
 });

@@ -9,30 +9,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PriceListItem extends Model
 {
-    public const TYPE_OVERRIDE = 'OVERRIDE';
-    public const TYPE_FIXED = 'FIXED';
-    public const TYPE_PERCENTAGE = 'PERCENTAGE';
-
     protected $fillable = [
         'price_list_id',
         'service_variant_id',
         'adjustment_type',
         'adjustment_value',
-        'override_cost',
-        'override_sale_price',
         'active',
     ];
 
     protected $casts = [
-        'adjustment_value' => 'decimal:4',
-        'override_cost' => 'decimal:2',
-        'override_sale_price' => 'decimal:2',
+        'adjustment_value' => 'decimal:2',
         'active' => 'boolean',
     ];
 
     /*
     |--------------------------------------------------------------------------
-    | Relationships
+    | Price List
     |--------------------------------------------------------------------------
     */
 
@@ -43,6 +35,12 @@ class PriceListItem extends Model
             'price_list_id'
         );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Service Variant
+    |--------------------------------------------------------------------------
+    */
 
     public function serviceVariant(): BelongsTo
     {
