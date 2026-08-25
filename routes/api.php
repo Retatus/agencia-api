@@ -26,8 +26,6 @@ use App\Quotation\Http\Controllers\QuotationPassengerController;
 
 use App\Audit\Http\Controllers\HistoryController;
 
-
-
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
     Route::apiResource('currencies', CurrencyController::class);
@@ -68,12 +66,6 @@ Route::group([], function () {
         Route::apiResource('customers', CustomerController::class);
     });
 
-    // Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
-    // Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
-    // Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
-    // Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
     Route::get('quotations/statuses', [QuotationStatusController::class, 'index']);
     Route::prefix('quotations/{quotation:uuid}')->group(function () {
@@ -88,17 +80,10 @@ Route::group([], function () {
     Route::prefix('quotations-itineraries')->group(function () {
         Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
     });
-    // Route::get('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'items'])->name('quotations-itineraries.items');
-    // Route::post('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'itemsStore'])->name('quotations-itineraries.items.store');
-    // Route::put('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsUpdate'])->name('quotations-itineraries.items.update');
-    // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
 
     Route::prefix('audit')->group(function () {
         Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
-
-    
-       
 });

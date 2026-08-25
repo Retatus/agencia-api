@@ -49,14 +49,6 @@ class CalculationRequest
     }
 
     /**
-     * Obtener lista de precios.
-     */
-    public function priceListId(): ?int
-    {
-        return $this->quotation['price_list_id'] ?? null;
-    }
-
-    /**
      * Obtener todo el payload.
      */
     public function toArray(): array

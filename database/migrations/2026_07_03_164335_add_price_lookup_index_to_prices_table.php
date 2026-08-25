@@ -15,11 +15,18 @@ return new class extends Migration
 
             $table->index(
                 [
-                    'price_list_id',
                     'service_variant_id',
-                    'price_type_id'
+                    'price_type_id',
+                    'passenger_type_id',
+                    'currency_id',
+                    'active',
                 ],
                 'idx_price_lookup'
+            );
+
+            $table->index(
+                ['valid_from', 'valid_to'],
+                'idx_price_validity'
             );
 
         });
@@ -33,6 +40,7 @@ return new class extends Migration
         Schema::table('prices', function (Blueprint $table) {
 
             $table->dropIndex('idx_price_lookup');
+            $table->dropIndex('idx_price_validity');
 
         });
     }

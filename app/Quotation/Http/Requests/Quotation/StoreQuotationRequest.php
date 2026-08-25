@@ -25,8 +25,6 @@ class StoreQuotationRequest extends FormRequest
 
             'currency_id' => ['required','exists:currencies,id'],
 
-            'price_list_id' => ['required','exists:price_lists,id'],
-
             'travel_date' => ['required','date'],
 
             'valid_until' => ['required','date'],
@@ -144,6 +142,12 @@ class StoreQuotationRequest extends FormRequest
             'itineraries.*.items.*.unit_cost'
                 => ['required','numeric','min:0'],
 
+            'itineraries.*.items.*.base_cost'
+                => ['sometimes','numeric','min:0'],
+
+            'itineraries.*.items.*.base_price'
+                => ['sometimes','numeric','min:0'],
+
             'itineraries.*.items.*.price_id'
                 => ['nullable','exists:prices,id'],
 
@@ -152,6 +156,12 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items.*.subtotal'
                 => ['required','numeric','min:0'],
+
+            'itineraries.*.items.*.subtotal_cost'
+                => ['sometimes','numeric','min:0'],
+
+            'itineraries.*.items.*.subtotal_sale'
+                => ['sometimes','numeric','min:0'],
 
             'itineraries.*.items.*.sort_order'
                 => ['required','numeric','min:1'],
@@ -172,9 +182,6 @@ class StoreQuotationRequest extends FormRequest
 
             'currency_id.required' => 'La moneda es obligatoria.',
             'currency_id.exists' => 'La moneda no existe.',
-
-            'price_list_id.required' => 'La lista de precios es obligatoria.',
-            'price_list_id.exists' => 'La lista de precios no existe.',
 
             'travel_date.required' => 'La fecha de viaje es obligatoria.',
             'travel_date.date' => 'La fecha de viaje debe ser una fecha válida.',

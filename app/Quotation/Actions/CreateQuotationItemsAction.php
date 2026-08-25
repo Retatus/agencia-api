@@ -19,6 +19,8 @@ class CreateQuotationItemsAction
             $quantity = (float) ($itemData['quantity'] ?? 1);
             $unitCost = (float) ($itemData['unit_cost'] ?? 0);
             $unitPrice = (float) ($itemData['unit_price'] ?? 0);
+            $baseCost = (float) ($itemData['base_cost'] ?? $unitCost);
+            $basePrice = (float) ($itemData['base_price'] ?? $unitPrice);
             $calculationType = $itemData['calculation_type'] ?? 'generic';
             $duration =  max( 1, (int) ($itemData['duration'] ?? 1 ));
 
@@ -51,6 +53,8 @@ class CreateQuotationItemsAction
                 'duration'           => $duration,
 
                 'quantity'           => $quantity,
+                'base_cost'          => $baseCost,
+                'base_price'         => $basePrice,
                 'unit_cost'          => $unitCost,
                 'unit_price'         => $unitPrice,
 
@@ -66,6 +70,20 @@ class CreateQuotationItemsAction
 
                     duration:
                         $duration
+                ),
+
+                'subtotal_cost'      => $this->calculateSubtotal(
+                    calculationType: $calculationType,
+                    quantity: $quantity,
+                    unitPrice: $unitCost,
+                    duration: $duration
+                ),
+
+                'subtotal_sale'      => $this->calculateSubtotal(
+                    calculationType: $calculationType,
+                    quantity: $quantity,
+                    unitPrice: $unitPrice,
+                    duration: $duration
                 ),
 
                 'sort_order'         => $itemData['sort_order'] ?? 1,

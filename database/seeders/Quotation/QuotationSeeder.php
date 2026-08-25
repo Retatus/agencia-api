@@ -17,7 +17,6 @@ class QuotationSeeder extends Seeder
                 'code' => 'COT-000001',
 
                 'customer_id' => 1,
-                'price_list_id' => 1,
                 'currency_id' => 1,
                 'quotation_status_id' => 1,
 
@@ -45,7 +44,6 @@ class QuotationSeeder extends Seeder
                 'code' => 'COT-000002',
 
                 'customer_id' => 2,
-                'price_list_id' => 1,
                 'currency_id' => 1,
                 'quotation_status_id' => 3,
 

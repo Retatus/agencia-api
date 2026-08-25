@@ -157,7 +157,6 @@ class UpdateQuotationAction
                     ->load([
                         'customer',
                         'currency',
-                        'priceList',
                         'status',
 
                         'itineraries',

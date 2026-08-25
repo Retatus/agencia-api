@@ -73,16 +73,6 @@ class PriceListController extends Controller
         PriceList $priceList
     )
     {
-        if ($priceList->prices()->exists()) {
-
-            return response()->json([
-
-                'message' => 'No puede eliminarse porque tiene precios asociados.'
-
-            ], Response::HTTP_CONFLICT);
-
-        }
-
         $priceList->delete();
 
         return response()->json([

@@ -479,9 +479,9 @@ class VehicleAllocator
      *
      * Prioridades:
      *
-     * 1. Menor capacidad sobrante.
-     * 2. Menor costo.
-     * 3. Menor cantidad de vehículos.
+     * 1. Menor costo total.
+     * 2. Menor cantidad de vehículos.
+     * 3. Menor capacidad sobrante.
      */
     protected function compare(
         array $a,
@@ -490,22 +490,7 @@ class VehicleAllocator
 
         /*
         |--------------------------------------------------------------------------
-        | 1. Capacidad sobrante
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $a['unused_capacity']
-            !== $b['unused_capacity']
-        ) {
-            return
-                $a['unused_capacity']
-                <=> $b['unused_capacity'];
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | 2. Costo
+        | 1. Costo total
         |--------------------------------------------------------------------------
         */
 
@@ -520,13 +505,28 @@ class VehicleAllocator
 
         /*
         |--------------------------------------------------------------------------
-        | 3. Cantidad de vehículos
+        | 2. Cantidad de vehículos
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $a['total_vehicles']
+            !== $b['total_vehicles']
+        ) {
+            return
+                $a['total_vehicles']
+                <=> $b['total_vehicles'];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Capacidad sobrante
         |--------------------------------------------------------------------------
         */
 
         return
-            $a['total_vehicles']
-            <=> $b['total_vehicles'];
+            $a['unused_capacity']
+            <=> $b['unused_capacity'];
     }
 
     /**

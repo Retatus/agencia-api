@@ -38,9 +38,13 @@ class QuotationItem extends Model
         'duration',
         'quantity',
         'price_id',
+        'base_cost',
+        'base_price',
         'unit_cost',
         'unit_price',
         'subtotal',
+        'subtotal_cost',
+        'subtotal_sale',
         'sort_order',
         'notes',
         'active',
@@ -55,7 +59,15 @@ class QuotationItem extends Model
 
         'unit_price' => 'decimal:2',
 
+        'base_cost' => 'decimal:2',
+
+        'base_price' => 'decimal:2',
+
         'subtotal' => 'decimal:2',
+
+        'subtotal_cost' => 'decimal:2',
+
+        'subtotal_sale' => 'decimal:2',
 
         'group_index' => 'integer',
 

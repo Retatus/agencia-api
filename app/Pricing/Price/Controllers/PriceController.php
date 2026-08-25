@@ -5,6 +5,8 @@ namespace App\Pricing\Price\Controllers;
 use App\Filters\Pricing\PriceFilter;
 use App\Http\Controllers\Controller;
 use App\Pricing\Price\Actions\BulkUpdatePricesAction;
+use App\Pricing\Price\Actions\CreatePriceAction;
+use App\Pricing\Price\Actions\UpdatePriceAction;
 use App\Pricing\Price\Requests\BulkUpdatePricesRequest;
 use App\Pricing\Price\Requests\StorePriceRequest;
 use App\Pricing\Price\Requests\UpdatePriceRequest;
@@ -20,10 +22,10 @@ class PriceController extends Controller
      * Relaciones que siempre cargaremos.
      */
     private array $relations = [
-        'priceList',
         'serviceVariant.service',
         'priceType',
         'passengerType',
+        'currency',
     ];
 
     /**
@@ -45,9 +47,12 @@ class PriceController extends Controller
     /**
      * Crear precio.
      */
-    public function store(StorePriceRequest $request): PriceResource 
+    public function store(
+        StorePriceRequest $request,
+        CreatePriceAction $action
+    ): PriceResource
     {
-        $price = Price::create(
+        $price = $action->execute(
             $request->validated()
         );
 
@@ -69,9 +74,14 @@ class PriceController extends Controller
     /**
      * Actualizar un precio.
      */
-    public function update(UpdatePriceRequest $request, Price $price): PriceResource 
+    public function update(
+        UpdatePriceRequest $request,
+        Price $price,
+        UpdatePriceAction $action
+    ): PriceResource
     {
-        $price->update(
+        $price = $action->execute(
+            $price,
             $request->validated()
         );
 

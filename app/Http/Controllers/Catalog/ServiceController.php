@@ -122,7 +122,6 @@ class ServiceController extends Controller
     public function prices( Request $request, Service $service, int $variant_id) 
     {
         $request->validate([
-            'price_list_id' => 'nullable|integer',
             'passenger_type_id' => 'nullable|integer',
         ]);
 
@@ -133,14 +132,6 @@ class ServiceController extends Controller
 
         $prices = $variant->prices()
             ->where('active', true)
-            ->when(
-                $request->filled('price_list_id'),
-                fn ($query) =>
-                    $query->where(
-                        'price_list_id',
-                        $request->integer('price_list_id')
-                    )
-            )
             ->when(
                 $request->filled('passenger_type_id'),
                 fn ($query) =>

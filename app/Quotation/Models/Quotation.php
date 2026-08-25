@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\CRM\Customer;
-use App\Pricing\PriceList\Models\PriceList;
 use App\Models\Currency;
 
 use App\Traits\HasHistory;
@@ -26,7 +25,6 @@ class Quotation extends Model
         'uuid',
         'code',
         'customer_id',
-        'price_list_id',
         'currency_id',
         'quotation_status_id',
         'exchange_rate',
@@ -78,11 +76,6 @@ class Quotation extends Model
     public function currency()
     {
         return $this->belongsTo(Currency::class);
-    }
-
-    public function priceList()
-    {
-        return $this->belongsTo(PriceList::class);
     }
 
     public function status()

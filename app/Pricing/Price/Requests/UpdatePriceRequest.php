@@ -22,14 +22,17 @@ class UpdatePriceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'price_list_id' => 'sometimes|exists:price_lists,id',
             'service_variant_id' => 'sometimes|exists:service_variants,id',
             'price_type_id' => 'sometimes|exists:price_types,id',
-            'passenger_type_id' => 'sometimes|exists:passenger_types,id',
-            'min_quantity' => 'sometimes|integer|min:1',
-            'max_quantity' => 'sometimes|integer|min:1|gte:min_quantity',
+            'passenger_type_id' => 'sometimes|nullable|exists:passenger_types,id',
+            'currency_id' => 'sometimes|exists:currencies,id',
+            'min_quantity' => 'sometimes|nullable|integer|min:1',
+            'max_quantity' => 'sometimes|nullable|integer|min:1',
+            'valid_from' => 'sometimes|nullable|date_format:Y-m-d',
+            'valid_to' => 'sometimes|nullable|date_format:Y-m-d',
             'cost' => 'sometimes|numeric|min:0',
             'sale_price' => 'sometimes|numeric|min:0',
+            'priority' => 'sometimes|integer|min:1',
             'active' => 'boolean',
         ];
     }
@@ -37,14 +40,13 @@ class UpdatePriceRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'price_list_id.somentimes' => 'El ID de la lista de precios es obligatorio.',
-            'price_list_id.exists' => 'La lista de precios seleccionada no existe.',
             'service_variant_id.somentimes' => 'El ID de la variante de servicio es obligatorio.',
             'service_variant_id.exists' => 'La variante de servicio seleccionada no existe.',
             'price_type_id.somentimes' => 'El ID del tipo de precio es obligatorio.',
             'price_type_id.exists' => 'El tipo de precio seleccionado no existe.',
             'passenger_type_id.somentimes' => 'El ID del tipo de pasajero es obligatorio.',
             'passenger_type_id.exists' => 'El tipo de pasajero seleccionado no existe.',
+            'currency_id.exists' => 'La moneda seleccionada no existe.',
             'min_quantity.somentimes' => 'La cantidad mínima es obligatoria.',
             'min_quantity.integer' => 'La cantidad mínima debe ser un número entero.',
             'min_quantity.min' => 'La cantidad mínima debe ser al menos 1.',
@@ -52,13 +54,45 @@ class UpdatePriceRequest extends FormRequest
             'max_quantity.integer' => 'La cantidad máxima debe ser un número entero.',
             'max_quantity.min' => 'La cantidad máxima debe ser al menos 1.',
             'max_quantity.gte' => 'La cantidad máxima debe ser mayor o igual a la cantidad mínima.',
+            'valid_from.date_format' => 'La fecha inicial debe usar el formato YYYY-MM-DD.',
+            'valid_to.date_format' => 'La fecha final debe usar el formato YYYY-MM-DD.',
             'cost.somentimes' => 'El costo es obligatorio.',
             'cost.numeric' => 'El costo debe ser un número válido.',
             'cost.min' => 'El costo no puede ser negativo.',
             'sale_price.somentimes' => 'El precio de venta es obligatorio.',
             'sale_price.numeric' => 'El precio de venta debe ser un número válido.',
             'sale_price.min' => 'El precio de venta no puede ser negativo.',
+            'priority.integer' => 'La prioridad debe ser un número entero.',
+            'priority.min' => 'La prioridad debe ser al menos 1.',
             'active.boolean' => 'El campo activo debe ser verdadero o falso.',
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+                $price = $this->route('price');
+
+                $min = $this->input('min_quantity', $price?->min_quantity);
+                $max = $this->input('max_quantity', $price?->max_quantity);
+                $from = $this->input('valid_from', $price?->valid_from?->format('Y-m-d'));
+                $to = $this->input('valid_to', $price?->valid_to?->format('Y-m-d'));
+
+                if ($min !== null && $max !== null && (int) $min > (int) $max) {
+                    $validator->errors()->add(
+                        'max_quantity',
+                        'La cantidad máxima debe ser mayor o igual a la mínima.'
+                    );
+                }
+
+                if ($from !== null && $to !== null && $to < $from) {
+                    $validator->errors()->add(
+                        'valid_to',
+                        'La fecha final debe ser posterior o igual a la fecha inicial.'
+                    );
+                }
+            },
         ];
     }
 }

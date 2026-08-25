@@ -18,13 +18,13 @@ class PriceFilter extends BaseFilter
         |--------------------------------------------------------------------------
         */
 
-        $this->priceList();
-
         $this->serviceVariant();
 
         $this->priceType();
 
         $this->passengerType();
+
+        $this->currency();
 
         $this->active();
 
@@ -60,6 +60,8 @@ class PriceFilter extends BaseFilter
 
         $this->quantityRange();
 
+        $this->validity();
+
         /*
         |--------------------------------------------------------------------------
         | Sorting
@@ -69,30 +71,6 @@ class PriceFilter extends BaseFilter
         $this->sorting();
 
         return $this->query;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRICE LIST
-    |--------------------------------------------------------------------------
-    */
-
-    protected function priceList(): void
-    {
-        if (
-            ! $this->request->filled(
-                'price_list_id'
-            )
-        ) {
-            return;
-        }
-
-        $this->query->where(
-            'price_list_id',
-            $this->request->integer(
-                'price_list_id'
-            )
-        );
     }
 
     /*
@@ -165,6 +143,35 @@ class PriceFilter extends BaseFilter
                 'passenger_type_id'
             )
         );
+    }
+
+    protected function currency(): void
+    {
+        if (! $this->request->filled('currency_id')) {
+            return;
+        }
+
+        $this->query->where(
+            'currency_id',
+            $this->request->integer('currency_id')
+        );
+    }
+
+    protected function validity(): void
+    {
+        if (! $this->request->filled('date')) {
+            return;
+        }
+
+        $date = $this->request->date('date')->toDateString();
+
+        $this->query
+            ->where(fn (Builder $query) => $query
+                ->whereNull('valid_from')
+                ->orWhereDate('valid_from', '<=', $date))
+            ->where(fn (Builder $query) => $query
+                ->whereNull('valid_to')
+                ->orWhereDate('valid_to', '>=', $date));
     }
 
     /*

@@ -30,7 +30,6 @@ class CreateQuotationHeaderAction
 
             'customer_id'          => $data['customer_id'],
             'currency_id'          => $data['currency_id'],
-            'price_list_id'        => $data['price_list_id'],
             'quotation_status_id'  => $data['quotation_status_id'] ?? $this->draftStatus(),
 
             /*

@@ -41,7 +41,6 @@ class QuotationController extends BaseCrudController
     protected array $with = [
         'customer',
         'currency',
-        'priceList',
         'status',
         'passengers.passengerType',
         'itineraries.items',

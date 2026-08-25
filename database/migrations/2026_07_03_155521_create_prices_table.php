@@ -13,10 +13,6 @@ return new class extends Migration
     {
         Schema::create('prices', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('price_list_id')
-                ->constrained('price_lists')
-                ->cascadeOnDelete();
-
             $table->foreignId('service_variant_id')
                 ->constrained('service_variants')
                 ->cascadeOnDelete();
@@ -26,14 +22,21 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->foreignId('passenger_type_id')
-                ->nullable() // primero                
+                ->nullable()
                 ->constrained('passenger_types')
-                ->cascadeOnDelete();
+                ->nullOnDelete();
+
+            $table->foreignId('currency_id')
+                ->constrained('currencies')
+                ->restrictOnDelete();
 
             $table->unsignedInteger('min_quantity')->nullable();
             $table->unsignedInteger('max_quantity')->nullable();
+            $table->date('valid_from')->nullable();
+            $table->date('valid_to')->nullable();
             $table->decimal('cost',12,2);
             $table->decimal('sale_price',12,2);
+            $table->unsignedInteger('priority')->default(1);
             $table->boolean('active')->default(true);
             $table->timestamps();
         });
@@ -44,6 +47,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('price');
+        Schema::dropIfExists('prices');
     }
 };

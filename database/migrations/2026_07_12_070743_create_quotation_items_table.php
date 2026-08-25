@@ -108,13 +108,24 @@ return new class extends Migration
 
             $table->decimal('quantity', 10, 2)->default(1);
 
-            $table->unsignedBigInteger('price_id')->nullable();
+            $table->foreignId('price_id')
+                ->nullable()
+                ->constrained('prices')
+                ->nullOnDelete();
+
+            $table->decimal('base_cost', 12, 2)->default(0);
+
+            $table->decimal('base_price', 12, 2)->default(0);
 
             $table->decimal('unit_cost', 12, 2)->default(0);
 
             $table->decimal('unit_price', 12, 2)->default(0);
 
             $table->decimal('subtotal', 12, 2)->default(0);
+
+            $table->decimal('subtotal_cost', 12, 2)->default(0);
+
+            $table->decimal('subtotal_sale', 12, 2)->default(0);
 
             /*
             |--------------------------------------------------------------------------

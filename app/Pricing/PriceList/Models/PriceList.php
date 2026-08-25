@@ -4,11 +4,9 @@ namespace App\Pricing\PriceList\Models;
 
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\Currency;
-use App\Pricing\Price\Models\Price;
 
 class PriceList extends Model
 {
@@ -62,11 +60,6 @@ class PriceList extends Model
     public function currency()
     {
         return $this->belongsTo(Currency::class);
-    }
-
-    public function prices(): HasMany
-    {
-        return $this->hasMany(Price::class);
     }
 
     /*
