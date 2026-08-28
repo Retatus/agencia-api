@@ -4,12 +4,14 @@ namespace App\Quotation\Calculation\Calculators;
 
 use App\Quotation\Calculation\Contracts\CalculatorInterface;
 use App\Quotation\Calculation\DTOs\CalculationResult;
+use App\Quotation\Calculation\Services\AccommodationRecommendationPricer;
 use App\Quotation\Calculation\Services\RoomAllocator;
 
 class AccommodationCalculator implements CalculatorInterface
 {
     public function __construct(
-        protected RoomAllocator $roomAllocator
+        protected RoomAllocator $roomAllocator,
+        protected AccommodationRecommendationPricer $recommendationPricer,
     ) {
     }
 
@@ -38,8 +40,52 @@ class AccommodationCalculator implements CalculatorInterface
             $this->roomAllocator->recommend(
                 passengers: $passengers,
                 roomTypes: $roomTypes,
-                limit: 5
+                limit: 100
             );
+
+        $currencyId = (int) ($item['currency_id'] ?? 0);
+        $serviceDate = $item['service_date'] ?? null;
+        $pricingError = null;
+
+        if ($currencyId <= 0 || $serviceDate === null) {
+            $recommendations = [];
+            $pricingError = 'El alojamiento requiere una fecha de servicio y una moneda válidas.';
+        } else {
+            $recommendations = collect($recommendations)
+                ->map(fn (array $recommendation) =>
+                    $this->recommendationPricer->price(
+                        recommendation: $recommendation,
+                        currencyId: $currencyId,
+                        serviceDate: $serviceDate,
+                        nights: $nights,
+                    )
+                )
+                ->filter()
+                ->sort(function (array $left, array $right): int {
+                    if ($left['unused_capacity'] !== $right['unused_capacity']) {
+                        return $left['unused_capacity'] <=> $right['unused_capacity'];
+                    }
+
+                    if ($left['total_cost'] !== $right['total_cost']) {
+                        return $left['total_cost'] <=> $right['total_cost'];
+                    }
+
+                    return $left['total_rooms'] <=> $right['total_rooms'];
+                })
+                ->take(5)
+                ->values()
+                ->map(function (array $recommendation, int $index): array {
+                    $recommendation['rank'] = $index + 1;
+                    $recommendation['recommended'] = $index === 0;
+
+                    return $recommendation;
+                })
+                ->all();
+
+            if (empty($recommendations)) {
+                $pricingError = 'No existen tarifas de alojamiento compatibles con la fecha, moneda y cantidad de habitaciones.';
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -62,64 +108,10 @@ class AccommodationCalculator implements CalculatorInterface
                     'passenger_count' => count($passengers),
                     'room_count' => 0,
                     'nights' => $nights,
+                    'pricing_error' => $pricingError,
                 ]
             );
         }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Aplicar noches a cada recomendación
-        |--------------------------------------------------------------------------
-        */
-
-        $recommendations = collect($recommendations)
-            ->map(function ($recommendation) use ($nights) {
-
-                $totalCost = 0;
-                $totalSale = 0;
-
-                $recommendation['rooms'] =
-                    collect($recommendation['rooms'])
-                        ->map(function ($room) use (
-                            $nights,
-                            &$totalCost,
-                            &$totalSale
-                        ) {
-
-                            $room['nights'] =
-                                $nights;
-
-                            $room['subtotal_cost'] =
-                                $room['quantity']
-                                * $room['unit_cost']
-                                * $nights;
-
-                            $room['subtotal_sale'] =
-                                $room['quantity']
-                                * $room['unit_price']
-                                * $nights;
-
-                            $totalCost +=
-                                $room['subtotal_cost'];
-
-                            $totalSale +=
-                                $room['subtotal_sale'];
-
-                            return $room;
-                        })
-                        ->values()
-                        ->all();
-
-                $recommendation['total_cost'] =
-                    $totalCost;
-
-                $recommendation['total_sale'] =
-                    $totalSale;
-
-                return $recommendation;
-            })
-            ->values()
-            ->all();
 
         /*
         |--------------------------------------------------------------------------

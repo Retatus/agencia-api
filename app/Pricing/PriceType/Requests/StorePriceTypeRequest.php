@@ -2,7 +2,9 @@
 
 namespace App\Pricing\PriceType\Requests;
 
+use App\Pricing\PriceType\Enums\QuantityBasis;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Override;
 
 class StorePriceTypeRequest extends FormRequest
@@ -26,6 +28,7 @@ class StorePriceTypeRequest extends FormRequest
             'code' => 'required|string|max:10|unique:price_types',
             'name' => 'required|string|max:50',
             'description' => 'nullable|string|max:255',
+            'quantity_basis' => ['sometimes', Rule::enum(QuantityBasis::class)],
             'active' => 'boolean',
         ];
     }
@@ -42,6 +45,7 @@ class StorePriceTypeRequest extends FormRequest
             'name.max' => 'El nombre no debe tener más de 50 caracteres.',
             'description.string' => 'La descripción debe ser una cadena de texto.',
             'description.max' => 'La descripción no debe tener más de 255 caracteres.',
+            'quantity_basis.enum' => 'La base tarifaria debe ser PASSENGERS o UNITS.',
             'active.boolean' => 'El campo activo debe ser verdadero o falso.',
         ];
     }

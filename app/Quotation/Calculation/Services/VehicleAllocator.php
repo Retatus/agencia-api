@@ -10,9 +10,9 @@ class VehicleAllocator
      * Criterios actuales:
      *
      * 1. Cubrir a todos los pasajeros.
-     * 2. Menor capacidad sobrante.
-     * 3. Menor costo total.
-     * 4. Menor cantidad de vehículos.
+     * 2. Menor costo total.
+     * 3. Menor cantidad de vehículos.
+     * 4. Menor capacidad sobrante.
      *
      * No consulta base de datos.
      *

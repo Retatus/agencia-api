@@ -2,6 +2,7 @@
 
 namespace App\Pricing\PriceType\Models;
 
+use App\Pricing\PriceType\Enums\QuantityBasis;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,11 +18,13 @@ class PriceType extends Model
         'code',
         'name',
         'description',
+        'quantity_basis',
         'active',
     ];
 
     protected $casts = [
         'active' => 'boolean',
+        'quantity_basis' => QuantityBasis::class,
     ];
 
     protected $hidden = [

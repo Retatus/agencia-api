@@ -4,12 +4,14 @@ namespace App\Quotation\Calculation\Calculators;
 
 use App\Quotation\Calculation\Contracts\CalculatorInterface;
 use App\Quotation\Calculation\DTOs\CalculationResult;
+use App\Quotation\Calculation\Services\TransportRecommendationPricer;
 use App\Quotation\Calculation\Services\VehicleAllocator;
 
 class TransportCalculator implements CalculatorInterface
 {
     public function __construct(
-        protected VehicleAllocator $vehicleAllocator
+        protected VehicleAllocator $vehicleAllocator,
+        protected TransportRecommendationPricer $recommendationPricer,
     ) {
     }
 
@@ -56,8 +58,46 @@ class TransportCalculator implements CalculatorInterface
             $this->vehicleAllocator->recommend(
                 passengers: $passengers,
                 vehicleTypes: $vehicleTypes,
-                limit: 5
+                limit: 100
             );
+
+        $currencyId = (int) ($item['currency_id'] ?? 0);
+        $serviceDate = $item['service_date'] ?? null;
+
+        if ($currencyId <= 0 || $serviceDate === null) {
+            $recommendations = [];
+        } else {
+            $recommendations = collect($recommendations)
+                ->map(fn (array $recommendation) =>
+                    $this->recommendationPricer->price(
+                        recommendation: $recommendation,
+                        passengerCount: count($passengers),
+                        currencyId: $currencyId,
+                        serviceDate: $serviceDate,
+                    )
+                )
+                ->filter()
+                ->sort(function (array $left, array $right): int {
+                    if ($left['total_cost'] !== $right['total_cost']) {
+                        return $left['total_cost'] <=> $right['total_cost'];
+                    }
+
+                    if ($left['total_vehicles'] !== $right['total_vehicles']) {
+                        return $left['total_vehicles'] <=> $right['total_vehicles'];
+                    }
+
+                    return $left['unused_capacity'] <=> $right['unused_capacity'];
+                })
+                ->take(5)
+                ->values()
+                ->map(function (array $recommendation, int $index): array {
+                    $recommendation['rank'] = $index + 1;
+                    $recommendation['recommended'] = $index === 0;
+
+                    return $recommendation;
+                })
+                ->all();
+        }
 
         /*
         |--------------------------------------------------------------------------

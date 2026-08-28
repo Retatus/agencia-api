@@ -37,7 +37,7 @@ class PriceResolverTest extends TestCase
         $this->assertNull($resolved->priceListItemId);
     }
 
-    public function test_it_resolves_the_price_range_using_unit_quantity(): void
+    public function test_it_resolves_a_transport_price_using_passengers_served(): void
     {
         $resolved = $this->pricingService()->resolve(
             $this->context('VAN', 'GROUP', quantity: 6)
@@ -45,6 +45,65 @@ class PriceResolverTest extends TestCase
 
         $this->assertSame('120.00', $resolved->baseCost);
         $this->assertSame('150.00', $resolved->baseSalePrice);
+    }
+
+    public function test_it_resolves_transport_price_boundaries_by_passengers_served(): void
+    {
+        $expectedRanges = [
+            1 => ['90.00', '120.00'],
+            4 => ['90.00', '120.00'],
+            5 => ['120.00', '150.00'],
+            7 => ['120.00', '150.00'],
+            8 => ['145.00', '180.00'],
+            10 => ['145.00', '180.00'],
+        ];
+
+        foreach ($expectedRanges as $passengerCount => [$cost, $salePrice]) {
+            $resolved = $this->pricingService()->resolve(
+                $this->context(
+                    'VAN',
+                    'GROUP',
+                    quantity: $passengerCount,
+                )
+            );
+
+            $this->assertSame(
+                $cost,
+                $resolved->baseCost,
+                "Costo incorrecto para {$passengerCount} pasajeros."
+            );
+
+            $this->assertSame(
+                $salePrice,
+                $resolved->baseSalePrice,
+                "Venta incorrecta para {$passengerCount} pasajeros."
+            );
+        }
+    }
+
+    public function test_it_fails_when_transport_quantity_exceeds_variant_price_ranges(): void
+    {
+        $this->expectException(PriceNotFoundException::class);
+
+        $this->pricingService()->resolve(
+            $this->context('VAN', 'GROUP', quantity: 11)
+        );
+    }
+
+    public function test_it_does_not_resolve_an_inactive_price(): void
+    {
+        Price::query()
+            ->where('service_variant_id', $this->variantId('VAN'))
+            ->where('price_type_id', $this->priceTypeId('GROUP'))
+            ->where('min_quantity', 5)
+            ->where('max_quantity', 7)
+            ->update(['active' => false]);
+
+        $this->expectException(PriceNotFoundException::class);
+
+        $this->pricingService()->resolve(
+            $this->context('VAN', 'GROUP', quantity: 6)
+        );
     }
 
     public function test_it_prefers_a_higher_priority_seasonal_price(): void
