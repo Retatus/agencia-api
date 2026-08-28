@@ -74,11 +74,11 @@ Route::group([], function () {
         Route::get('passengers', [QuotationPassengerController::class, 'index']);
     });
     Route::prefix('quotations')->group(function () {
-        Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
+        Route::apiResource('quotations', QuotationController::class)->parameters(['quotations' => 'quotation']);
     });
     
     Route::prefix('quotations-itineraries')->group(function () {
-        Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
+        Route::apiResource('quotations-itineraries', QuotationItineraryController::class)->parameters(['quotations-itineraries' => 'quotationItinerary']);
     });
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
