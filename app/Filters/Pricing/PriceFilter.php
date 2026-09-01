@@ -319,94 +319,91 @@ class PriceFilter extends BaseFilter
 
     protected function search(): void
     {
-        if (
-            ! $this->request->filled(
-                'search'
+        $search = trim(
+            (string) $this->request->input(
+                'search',
+                ''
             )
-        ) {
+        );
+
+        if ($search === '') {
             return;
         }
 
-        $search =
-            trim(
-                $this->request->input(
-                    'search'
-                )
-            );
+        $escaped = addcslashes(
+            $search,
+            '%_\\'
+        );
+
+        $like = "%{$escaped}%";
 
         $this->query->where(
-            function (
-                Builder $query
-            ) use ($search) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Variant
-                |--------------------------------------------------------------------------
-                */
-
-                $query->whereHas(
-                    'serviceVariant',
-                    function (
-                        Builder $variant
-                    ) use ($search) {
-                        $variant
-                            ->where(
-                                'name',
-                                'like',
-                                "%{$search}%"
-                            )
-                            ->orWhere(
-                                'code',
-                                'like',
-                                "%{$search}%"
-                            );
-                    }
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Service
-                |--------------------------------------------------------------------------
-                */
-
-                $query->orWhereHas(
-                    'serviceVariant.service',
-                    function (
-                        Builder $service
-                    ) use ($search) {
-                        $service
-                            ->where(
-                                'name',
-                                'like',
-                                "%{$search}%"
-                            )
-                            ->orWhere(
-                                'code',
-                                'like',
-                                "%{$search}%"
-                            );
-                    }
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Provider
-                |--------------------------------------------------------------------------
-                */
-
-                $query->orWhereHas(
-                    'serviceVariant.service.provider',
-                    function (
-                        Builder $provider
-                    ) use ($search) {
-                        $provider->where(
-                            'business_name',
-                            'like',
-                            "%{$search}%"
-                        );
-                    }
-                );
+            function (Builder $query) use ($like) {
+                $query
+                    ->whereHas(
+                        'serviceVariant',
+                        function (
+                            Builder $variant
+                        ) use ($like) {
+                            $variant
+                                ->where(
+                                    'name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    )
+                    ->orWhereHas(
+                        'serviceVariant.service',
+                        function (
+                            Builder $service
+                        ) use ($like) {
+                            $service
+                                ->where(
+                                    'name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'description',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    )
+                    ->orWhereHas(
+                        'serviceVariant.service.provider',
+                        function (
+                            Builder $provider
+                        ) use ($like) {
+                            $provider
+                                ->where(
+                                    'business_name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'commercial_name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    );
             }
         );
     }

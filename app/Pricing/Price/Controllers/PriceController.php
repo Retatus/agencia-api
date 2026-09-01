@@ -10,6 +10,7 @@ use App\Pricing\Price\Actions\UpdatePriceAction;
 use App\Pricing\Price\Requests\BulkUpdatePricesRequest;
 use App\Pricing\Price\Requests\StorePriceRequest;
 use App\Pricing\Price\Requests\UpdatePriceRequest;
+use App\Pricing\Price\Requests\FilterPriceRequest;
 use App\Pricing\Price\Resources\PriceResource;
 use App\Pricing\Price\Models\Price;
 use Illuminate\Http\JsonResponse;
@@ -31,17 +32,25 @@ class PriceController extends Controller
     /**
      * Listado de precios.
      */
-    public function index(Request $request, PriceFilter $filter)
+    public function index(FilterPriceRequest $request, PriceFilter $filter) 
     {
         $prices = $filter
             ->apply(
-                Price::query()->with($this->relations)
+                Price::query()->with(
+                    $this->relations
+                )
             )
             ->paginate(
-                $request->integer('per_page', 20)
-            );
+                $request->integer(
+                    'per_page',
+                    20
+                )
+            )
+            ->withQueryString();
 
-        return PriceResource::collection($prices);
+        return PriceResource::collection(
+            $prices
+        );
     }
 
     /**
