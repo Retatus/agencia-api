@@ -18,6 +18,7 @@ use App\Quotation\Actions\UpdateQuotationAction;
 use Illuminate\Http\JsonResponse;
 
 use App\Quotation\Calculation\Actions\CalculateQuotationAction;
+use DomainException;
 use Illuminate\Http\Request;
 
 
@@ -88,9 +89,16 @@ class QuotationController extends BaseCrudController
         CalculateQuotationAction $action
     ): JsonResponse
     {
-        $result = $action->execute(
-            $request->all()
-        );
+        try {
+            $result = $action->execute(
+                $request->all()
+            );
+        } catch (DomainException $exception) {
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'success' => true,

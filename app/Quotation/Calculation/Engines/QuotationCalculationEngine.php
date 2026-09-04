@@ -29,6 +29,9 @@ class QuotationCalculationEngine
                     ?? $request->toArray()['travel_date']
                     ?? null;
 
+                $item['passengers'] ??=
+                    $request->passengers();
+
                 $calculator = $this->calculatorFactory->make(
                     $item
                 );

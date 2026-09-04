@@ -146,6 +146,11 @@ class ServiceController extends Controller
             ->firstOrFail();
 
         $prices = $variant->prices()
+            ->with([
+                'priceType:id,code,name,quantity_basis',
+                'currency:id,code,name,symbol',
+                'passengerType:id,code,name',
+            ])
             ->where('active', true)
             ->when(
                 $request->filled('passenger_type_id'),
