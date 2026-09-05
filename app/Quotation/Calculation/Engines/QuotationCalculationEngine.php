@@ -32,6 +32,9 @@ class QuotationCalculationEngine
                 $item['passengers'] ??=
                     $request->passengers();
 
+                $item['commercial_policy_id'] ??=
+                    $request->commercialPolicyId();
+
                 $calculator = $this->calculatorFactory->make(
                     $item
                 );

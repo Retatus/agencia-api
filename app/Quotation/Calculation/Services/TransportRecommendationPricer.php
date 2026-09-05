@@ -23,6 +23,7 @@ final readonly class TransportRecommendationPricer
         int $passengerCount,
         int $currencyId,
         string $serviceDate,
+        ?int $commercialPolicyId = null,
     ): ?array {
         $units = $this->passengerDistribution->distribute(
             $recommendation['vehicles'],
@@ -62,6 +63,7 @@ final readonly class TransportRecommendationPricer
                         currencyId: $currencyId,
                         serviceDate: CarbonImmutable::parse($serviceDate),
                         quantity: $unit['passenger_count'],
+                        commercialPolicyId: $commercialPolicyId,
                     )
                 );
 
@@ -77,9 +79,16 @@ final readonly class TransportRecommendationPricer
                     'unit_index' => $unit['unit_index'],
                     'passenger_count' => $unit['passenger_count'],
                     'price_id' => $resolved->priceId,
+                    'price_list_id' => $resolved->priceListId,
+                    'price_list_item_id' => $resolved->priceListItemId,
+                    'base_cost' => (float) $resolved->baseCost,
+                    'base_price' => (float) $resolved->baseSalePrice,
                     'pricing_quantity' => $unit['passenger_count'],
                     'unit_cost' => $cost,
                     'unit_price' => $salePrice,
+                    'adjustment_type' => $resolved->adjustmentType,
+                    'cost_adjustment' => $resolved->costAdjustment,
+                    'sale_adjustment' => $resolved->saleAdjustment,
                 ];
             }
         } catch (PriceNotFoundException|AmbiguousPriceException) {
@@ -101,6 +110,10 @@ final readonly class TransportRecommendationPricer
                 array_column($allocationUnits, 'pricing_quantity');
             $recommendation['vehicles'][$index]['price_ids'] =
                 array_column($allocationUnits, 'price_id');
+            $recommendation['vehicles'][$index]['price_list_ids'] =
+                array_column($allocationUnits, 'price_list_id');
+            $recommendation['vehicles'][$index]['price_list_item_ids'] =
+                array_column($allocationUnits, 'price_list_item_id');
             $recommendation['vehicles'][$index]['unit_cost'] =
                 count(array_unique(array_column($allocationUnits, 'unit_cost'))) === 1
                     ? $allocationUnits[0]['unit_cost']
@@ -108,6 +121,14 @@ final readonly class TransportRecommendationPricer
             $recommendation['vehicles'][$index]['unit_price'] =
                 count(array_unique(array_column($allocationUnits, 'unit_price'))) === 1
                     ? $allocationUnits[0]['unit_price']
+                    : null;
+            $recommendation['vehicles'][$index]['base_cost'] =
+                count(array_unique(array_column($allocationUnits, 'base_cost'))) === 1
+                    ? $allocationUnits[0]['base_cost']
+                    : null;
+            $recommendation['vehicles'][$index]['base_price'] =
+                count(array_unique(array_column($allocationUnits, 'base_price'))) === 1
+                    ? $allocationUnits[0]['base_price']
                     : null;
             $recommendation['vehicles'][$index]['subtotal_cost'] =
                 array_sum(array_column($allocationUnits, 'unit_cost'));

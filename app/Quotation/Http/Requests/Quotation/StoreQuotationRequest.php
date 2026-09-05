@@ -151,6 +151,12 @@ class StoreQuotationRequest extends FormRequest
             'itineraries.*.items.*.price_id'
                 => ['nullable','exists:prices,id'],
 
+            'itineraries.*.items.*.price_list_id'
+                => ['nullable','exists:price_lists,id'],
+
+            'itineraries.*.items.*.price_list_item_id'
+                => ['nullable','exists:price_list_items,id'],
+
             'itineraries.*.items.*.unit_price'
                 => ['required','numeric','min:0'],
 

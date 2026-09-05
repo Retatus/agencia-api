@@ -28,6 +28,8 @@ class StorePriceListRequest extends FormRequest
             'currency_id' => 'required|exists:currencies,id',
             'valid_from' => 'required|date',
             'valid_to' => 'required|date|after:valid_from',
+            'priority' => 'sometimes|integer|min:1',
+            'is_default' => 'sometimes|boolean',
             'active' => 'boolean',
         ];
     }

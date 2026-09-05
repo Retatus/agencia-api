@@ -16,7 +16,8 @@ final readonly class ResolvedPrice
         public ?int $priceListId = null,
         public ?int $priceListItemId = null,
         public ?string $adjustmentType = null,
-        public ?string $adjustmentValue = null,
+        public ?string $costAdjustment = null,
+        public ?string $saleAdjustment = null,
     ) {
     }
 
@@ -44,7 +45,8 @@ final readonly class ResolvedPrice
             'price_list_id' => $this->priceListId,
             'price_list_item_id' => $this->priceListItemId,
             'adjustment_type' => $this->adjustmentType,
-            'adjustment_value' => $this->adjustmentValue,
+            'cost_adjustment' => $this->costAdjustment,
+            'sale_adjustment' => $this->saleAdjustment,
         ];
     }
 }

@@ -74,6 +74,9 @@ class TransportCalculator implements CalculatorInterface
                         passengerCount: count($passengers),
                         currencyId: $currencyId,
                         serviceDate: $serviceDate,
+                        commercialPolicyId: isset($item['commercial_policy_id'])
+                            ? (int) $item['commercial_policy_id']
+                            : null,
                     )
                 )
                 ->filter()

@@ -5,10 +5,12 @@ namespace App\Pricing\Price\Models;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use App\Pricing\PriceType\Models\PriceType;
 use App\Models\Currency;
 use App\Models\PassengerType;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 use App\Models\ServiceVariant;
 
 class Price extends Model
@@ -70,6 +72,11 @@ class Price extends Model
     public function currency(): BelongsTo
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
     }
 
     /*

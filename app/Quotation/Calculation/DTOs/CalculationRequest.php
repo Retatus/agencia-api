@@ -48,6 +48,13 @@ class CalculationRequest
         return $this->quotation['currency_id'] ?? null;
     }
 
+    public function commercialPolicyId(): ?int
+    {
+        $value = $this->quotation['commercial_policy_id'] ?? null;
+
+        return $value === null || $value === '' ? null : (int) $value;
+    }
+
     /**
      * Obtener todo el payload.
      */

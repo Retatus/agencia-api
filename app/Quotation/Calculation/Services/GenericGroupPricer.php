@@ -63,6 +63,9 @@ final readonly class GenericGroupPricer
                 currencyId: $currencyId,
                 serviceDate: CarbonImmutable::parse($serviceDate),
                 quantity: $passengerCount,
+                commercialPolicyId: isset($item['commercial_policy_id'])
+                    ? (int) $item['commercial_policy_id']
+                    : null,
             )
         );
 
@@ -79,6 +82,9 @@ final readonly class GenericGroupPricer
             'unit_price' => (float) $resolved->finalSalePrice,
             'price_list_id' => $resolved->priceListId,
             'price_list_item_id' => $resolved->priceListItemId,
+            'adjustment_type' => $resolved->adjustmentType,
+            'cost_adjustment' => $resolved->costAdjustment,
+            'sale_adjustment' => $resolved->saleAdjustment,
         ];
     }
 }

@@ -26,6 +26,7 @@ use Database\Seeders\Quotation\QuotationItemSeeder;
 use Database\Seeders\Demo\FrontendPricingScenarioSeeder;
 use Database\Seeders\Demo\InkaRoutesTestSeeder;
 use Database\Seeders\Demo\AndesTestTravelSeeder;
+use Database\Seeders\Demo\CommercialPricingDemoSeeder;
 
 
 class DatabaseSeeder extends Seeder
@@ -62,7 +63,8 @@ class DatabaseSeeder extends Seeder
 
             FrontendPricingScenarioSeeder::class,
             InkaRoutesTestSeeder::class,
-            AndesTestTravelSeeder::class
+            AndesTestTravelSeeder::class,
+            CommercialPricingDemoSeeder::class,
         ]);
     }
 }

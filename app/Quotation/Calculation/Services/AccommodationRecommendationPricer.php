@@ -22,6 +22,7 @@ final readonly class AccommodationRecommendationPricer
         int $currencyId,
         string $serviceDate,
         int $nights,
+        ?int $commercialPolicyId = null,
     ): ?array {
         $priceType = PriceType::query()
             ->where('code', 'ROOM')
@@ -49,6 +50,7 @@ final readonly class AccommodationRecommendationPricer
                         currencyId: $currencyId,
                         serviceDate: CarbonImmutable::parse($serviceDate),
                         quantity: $quantity,
+                        commercialPolicyId: $commercialPolicyId,
                     )
                 );
 
@@ -59,12 +61,19 @@ final readonly class AccommodationRecommendationPricer
 
                 $recommendation['rooms'][$index] = array_merge($room, [
                     'price_id' => $resolved->priceId,
+                    'price_list_id' => $resolved->priceListId,
+                    'price_list_item_id' => $resolved->priceListItemId,
+                    'base_cost' => (float) $resolved->baseCost,
+                    'base_price' => (float) $resolved->baseSalePrice,
                     'pricing_quantity' => $quantity,
                     'unit_cost' => $unitCost,
                     'unit_price' => $unitPrice,
                     'nights' => $nights,
                     'subtotal_cost' => $subtotalCost,
                     'subtotal_sale' => $subtotalSale,
+                    'adjustment_type' => $resolved->adjustmentType,
+                    'cost_adjustment' => $resolved->costAdjustment,
+                    'sale_adjustment' => $resolved->saleAdjustment,
                 ]);
 
                 $totalCost += $subtotalCost;

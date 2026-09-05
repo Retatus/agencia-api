@@ -3,6 +3,8 @@
 namespace Tests\Feature\Quotation;
 
 use App\Pricing\Price\Exceptions\PriceNotFoundException;
+use App\Pricing\PriceList\Models\PriceList;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 use App\Quotation\Calculation\Actions\CalculateQuotationAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -66,9 +68,51 @@ class GenericGroupPricingTest extends TestCase
         $this->calculateGuide(passengerCount: 31);
     }
 
+    public function test_it_applies_a_selected_commercial_policy_to_the_group_price(): void
+    {
+        $price = DB::table('prices')
+            ->join('service_variants', 'service_variants.id', '=', 'prices.service_variant_id')
+            ->where('service_variants.code', 'AT-GUIAPR')
+            ->where('prices.min_quantity', 1)
+            ->where('prices.max_quantity', 10)
+            ->select('prices.*')
+            ->first();
+
+        $list = PriceList::query()->create([
+            'code' => 'GUIDE-PROMO',
+            'name' => 'Promoción guías',
+            'description' => 'Promoción de prueba.',
+            'currency_id' => $price->currency_id,
+            'valid_from' => '2026-01-01',
+            'valid_to' => '2026-12-31',
+            'priority' => 1,
+            'active' => true,
+        ]);
+
+        $item = PriceListItem::query()->create([
+            'price_list_id' => $list->getKey(),
+            'price_id' => $price->id,
+            'adjustment_type' => 'PERCENTAGE',
+            'cost_adjustment' => null,
+            'sale_adjustment' => 10,
+            'active' => true,
+        ]);
+
+        $calculated = $this->calculateGuide(
+            passengerCount: 7,
+            commercialPolicyId: (int) $list->getKey(),
+        )['items'][0];
+
+        $this->assertEquals(90.0, $calculated['unit_cost']);
+        $this->assertEquals(143.0, $calculated['unit_price']);
+        $this->assertSame($list->getKey(), $calculated['item']['price_list_id']);
+        $this->assertSame($item->getKey(), $calculated['item']['price_list_item_id']);
+    }
+
     private function calculateGuide(
         int $passengerCount,
         bool $untrustedAmounts = false,
+        ?int $commercialPolicyId = null,
     ): array {
         $guide = DB::table('service_variants')
             ->where('code', 'AT-GUIAPR')
@@ -89,6 +133,7 @@ class GenericGroupPricingTest extends TestCase
         return app(CalculateQuotationAction::class)->execute([
             'travel_date' => '2026-06-15',
             'currency_id' => $currencyId,
+            'commercial_policy_id' => $commercialPolicyId,
             'passengers' => $passengers,
             'itineraries' => [[
                 'day_number' => 1,

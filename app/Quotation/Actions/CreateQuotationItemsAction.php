@@ -41,6 +41,8 @@ class CreateQuotationItemsAction
                 'service_id'         => $itemData['service_id'] ?? null,
                 'service_variant_id' => $itemData['service_variant_id'] ?? null,
                 'price_id'           => $itemData['price_id'] ?? null,
+                'price_list_id'      => $itemData['price_list_id'] ?? null,
+                'price_list_item_id' => $itemData['price_list_item_id'] ?? null,
 
                 'item_type'          => $itemData['item_type'] ?? 'CUSTOM',
                 'calculation_type'   => $calculationType,

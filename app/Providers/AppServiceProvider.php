@@ -10,7 +10,7 @@ use App\Quotation\Calculation\Contracts\CalculatorInterface;
 use App\Quotation\Calculation\Calculators\GenericCalculator;
 use App\Pricing\Price\Contracts\PriceAdjustmentPolicy;
 use App\Pricing\Price\Contracts\PriceResolverInterface;
-use App\Pricing\Price\Policies\NoPriceAdjustmentPolicy;
+use App\Pricing\Price\Policies\PriceListAdjustmentPolicy;
 use App\Pricing\Price\Services\PriceResolver;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             PriceAdjustmentPolicy::class,
-            NoPriceAdjustmentPolicy::class
+            PriceListAdjustmentPolicy::class
         );
     }
 

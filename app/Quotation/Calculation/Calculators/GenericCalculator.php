@@ -60,6 +60,8 @@ class GenericCalculator implements CalculatorInterface
         $resolvedItem = array_merge($item, [
             'quantity' => $quantity,
             'price_id' => $pricing['price_id'],
+            'price_list_id' => $pricing['price_list_id'],
+            'price_list_item_id' => $pricing['price_list_item_id'],
             'base_cost' => $pricing['base_cost'],
             'base_price' => $pricing['base_price'],
             'unit_cost' => $unitCost,
@@ -87,6 +89,9 @@ class GenericCalculator implements CalculatorInterface
                 'price_id' => $pricing['price_id'],
                 'price_list_id' => $pricing['price_list_id'],
                 'price_list_item_id' => $pricing['price_list_item_id'],
+                'adjustment_type' => $pricing['adjustment_type'],
+                'cost_adjustment' => $pricing['cost_adjustment'],
+                'sale_adjustment' => $pricing['sale_adjustment'],
             ],
         );
     }

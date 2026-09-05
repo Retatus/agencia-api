@@ -14,6 +14,7 @@ use App\Http\Controllers\Catalog\ProviderController;
 use App\Pricing\Price\Controllers\PriceController;
 use App\Pricing\PriceList\Controllers\PriceListController;
 use App\Pricing\PriceType\Controllers\PriceTypeController;
+use App\Pricing\PriceListItem\Controllers\PriceListItemController;
 
 use App\Http\Controllers\CRM\CustomerController;
 
@@ -56,6 +57,7 @@ Route::group([], function () {
 
     Route::prefix('pricing')->group(function () {
         Route::apiResource('price-lists', PriceListController::class);
+        Route::apiResource('price-list-items', PriceListItemController::class);
         Route::patch('prices/bulk', [PriceController::class, 'bulkUpdate']);
         Route::apiResource('prices', PriceController::class);
         Route::apiResource('price-types', PriceTypeController::class);
@@ -74,11 +76,11 @@ Route::group([], function () {
         Route::get('passengers', [QuotationPassengerController::class, 'index']);
     });
     Route::prefix('quotations')->group(function () {
-        Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
+        Route::apiResource('quotations', QuotationController::class)->parameters(['quotations' => 'quotation']);
     });
     
     Route::prefix('quotations-itineraries')->group(function () {
-        Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
+        Route::apiResource('quotations-itineraries', QuotationItineraryController::class)->parameters(['quotations-itineraries' => 'quotationItinerary']);
     });
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);

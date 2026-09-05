@@ -58,6 +58,9 @@ class AccommodationCalculator implements CalculatorInterface
                         currencyId: $currencyId,
                         serviceDate: $serviceDate,
                         nights: $nights,
+                        commercialPolicyId: isset($item['commercial_policy_id'])
+                            ? (int) $item['commercial_policy_id']
+                            : null,
                     )
                 )
                 ->filter()

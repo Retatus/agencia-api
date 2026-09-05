@@ -38,6 +38,8 @@ class QuotationItem extends Model
         'duration',
         'quantity',
         'price_id',
+        'price_list_id',
+        'price_list_item_id',
         'base_cost',
         'base_price',
         'unit_cost',
@@ -112,6 +114,20 @@ class QuotationItem extends Model
     public function price()
     {
         return $this->belongsTo(Price::class);
+    }
+
+    public function priceList()
+    {
+        return $this->belongsTo(
+            \App\Pricing\PriceList\Models\PriceList::class
+        );
+    }
+
+    public function priceListItem()
+    {
+        return $this->belongsTo(
+            \App\Pricing\PriceListItem\Models\PriceListItem::class
+        );
     }
 
     public function itinerary()
