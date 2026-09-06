@@ -1,33 +1,79 @@
 <?php
 
-namespace App\Quotation\Calculation\Actions;
+namespace App\Quotation\Actions;
 
-use App\Quotation\Calculation\DTOs\CalculationRequest;
-use App\Quotation\Calculation\Engines\QuotationCalculationEngine;
+use App\Quotation\Models\Quotation;
 
-class CalculateQuotationAction
+class CalculateQuotationTotalsAction
 {
-    public function __construct(
-        protected QuotationCalculationEngine $engine,
-        protected CalculateSummaryAction $summaryAction
-    ) {
-    }
-
-    public function execute(array $quotation): array
+    /**
+     * Recalcula los importes de la cotización.
+     */
+    public function execute(Quotation $quotation): Quotation
     {
-        $request = CalculationRequest::fromArray($quotation);
+        /*
+        |--------------------------------------------------------------------------
+        | Cargar itinerarios e items
+        |--------------------------------------------------------------------------
+        */
 
-        $results = $this->engine->calculate($request);
+        $quotation->loadMissing('itineraries.items');
 
-        return [
+        /*
+        |--------------------------------------------------------------------------
+        | Subtotal
+        |--------------------------------------------------------------------------
+        */
 
-            'items' => array_map(
-                fn ( $result ) => $result->toArray(),
-                $results
-            ),
+        $subtotal = 0;
 
-            'summary' => $this->summaryAction->execute($results),
+        foreach ($quotation->itineraries as $itinerary) {
 
-        ];
+            $subtotal += $itinerary->items->sum('subtotal');
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Descuento
+        |--------------------------------------------------------------------------
+        */
+
+        $discount = (float) ($quotation->discount ?? 0);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Impuesto
+        |--------------------------------------------------------------------------
+        */
+
+        $tax = (float) ($quotation->tax ?? 0);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Total
+        |--------------------------------------------------------------------------
+        */
+
+        $total = $subtotal - $discount + $tax;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Actualizar
+        |--------------------------------------------------------------------------
+        */
+
+        $quotation->update([
+
+            'subtotal' => $subtotal,
+
+            'total'    => $total,
+
+        ]);
+
+        return $quotation->fresh([
+            'itineraries',
+            'itineraries.items',
+        ]);
     }
 }
