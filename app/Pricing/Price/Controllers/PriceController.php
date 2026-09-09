@@ -23,7 +23,7 @@ class PriceController extends Controller
      * Relaciones que siempre cargaremos.
      */
     private array $relations = [
-        'serviceVariant.service',
+        'serviceVariant.service.provider',
         'priceType',
         'passengerType',
         'currency',

@@ -17,7 +17,7 @@ class PriceListItemController extends Controller
 {
     private array $relations = [
         'priceList.currency',
-        'price.serviceVariant.service',
+        'price.serviceVariant.service.provider',
         'price.priceType',
         'price.passengerType',
         'price.currency',
