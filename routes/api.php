@@ -27,6 +27,8 @@ use App\Quotation\Http\Controllers\QuotationPassengerController;
 
 use App\Audit\Http\Controllers\HistoryController;
 
+use App\Http\Controllers\Shared\CountryController;
+
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
     Route::apiResource('currencies', CurrencyController::class);
@@ -88,4 +90,6 @@ Route::group([], function () {
     Route::prefix('audit')->group(function () {
         Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
+
+    Route::apiResource('countries', CountryController::class);
 });

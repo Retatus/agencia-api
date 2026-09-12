@@ -31,6 +31,8 @@ class QuotationPassenger extends Model
         'nationality',
         'email',
         'phone',
+        'sort_order',
+        'active',
     ];
 
     protected $casts = [

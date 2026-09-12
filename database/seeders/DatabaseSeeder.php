@@ -65,6 +65,7 @@ class DatabaseSeeder extends Seeder
             InkaRoutesTestSeeder::class,
             AndesTestTravelSeeder::class,
             CommercialPricingDemoSeeder::class,
+            CountrySeeder::class,
         ]);
     }
 }

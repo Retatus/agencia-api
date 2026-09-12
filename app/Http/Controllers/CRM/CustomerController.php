@@ -19,7 +19,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $query = Customer::query()
-            ->with('documentType');
+            ->with(['documentType', 'country']);
 
         $query = (new CustomerFilter($request))->apply($query);
 
