@@ -30,5 +30,14 @@ class Country extends Model
             'nationality',
             'iso'
         );
-    }    
+    }
+    
+    public function quotationsPassengers()
+    {
+        return $this->hasMany(
+            \App\Quotation\Models\QuotationPassenger::class,
+            'nationality',
+            'iso'
+        );
+    }
 }

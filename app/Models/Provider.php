@@ -75,6 +75,15 @@ class Provider extends Model
         return $this->hasMany(Service::class);
     }
 
+    public function country()
+    {
+        return $this->belongsTo(
+            Country::class,
+            'nationality', // campo local en customers
+            'iso'          // campo en countries
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SCOPES

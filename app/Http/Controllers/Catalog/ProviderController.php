@@ -18,7 +18,7 @@ class ProviderController extends Controller
     public function index(Request $request, ProviderFilter $filter)
     {
         $providers = $filter->apply(
-                Provider::query()->with('documentType')
+                Provider::query()->with(['documentType', 'country'])
             )
             ->paginate(
                 $request->integer('per_page', 20)

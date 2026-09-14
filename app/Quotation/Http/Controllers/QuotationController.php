@@ -44,6 +44,7 @@ class QuotationController extends BaseCrudController
         'currency',
         'status',
         'passengers.passengerType',
+        'passengers.country',
         'itineraries.items',
     ];
 
