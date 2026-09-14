@@ -27,7 +27,7 @@ class QuotationPassengerSeeder extends Seeder
 
                 'document_number' => '45879632',
 
-                'nationality' => 'Peruana',
+                'nationality' => 'PE',
 
                 'email' => 'juan@test.com',
 
@@ -52,7 +52,7 @@ class QuotationPassengerSeeder extends Seeder
 
                 'document_number' => '74125896',
 
-                'nationality' => 'Peruana',
+                'nationality' => 'PE',
 
                 'email' => null,
 
@@ -77,7 +77,7 @@ class QuotationPassengerSeeder extends Seeder
 
                 'document_number' => 'PA458796',
 
-                'nationality' => 'USA',
+                'nationality' => 'US',
 
                 'email' => 'john@test.com',
 
