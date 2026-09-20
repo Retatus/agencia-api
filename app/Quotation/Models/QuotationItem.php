@@ -50,6 +50,7 @@ class QuotationItem extends Model
         'sort_order',
         'notes',
         'active',
+        'calculated_at',
     ];  
 
     protected $casts = [

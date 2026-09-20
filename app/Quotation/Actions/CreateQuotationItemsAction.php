@@ -3,6 +3,7 @@
 namespace App\Quotation\Actions;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 use App\Quotation\Models\QuotationItinerary;
 
@@ -93,6 +94,9 @@ class CreateQuotationItemsAction
                 'notes'              => $itemData['notes'] ?? null,
 
                 'active'             => $itemData['active'] ?? true,
+                'calculated_at'      => !empty($itemData['calculated_at'])
+                    ? Carbon::parse($itemData['calculated_at'])->format('Y-m-d H:i:s')
+                    : null,
             ]);
         }
     }

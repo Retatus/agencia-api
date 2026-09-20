@@ -4,6 +4,7 @@ namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
 use App\Quotation\Models\QuotationStatus;
+use Illuminate\Support\Carbon;
 
 class CreateQuotationHeaderAction
 {
@@ -12,6 +13,14 @@ class CreateQuotationHeaderAction
      */
     public function execute(array $data): Quotation
     {
+        $pendingItems = array_values(array_unique(
+            $data['pending_calculation_items'] ?? []
+        ));
+
+        $calculationStatus = empty($pendingItems)
+            ? Quotation::CALCULATION_CURRENT
+            : Quotation::CALCULATION_DIRTY;
+
         return Quotation::create([
 
             /*
@@ -73,6 +82,15 @@ class CreateQuotationHeaderAction
             'tax'       => 0,
             'total'     => 0,
 
+            'calculation_status' => $calculationStatus,
+            'calculation_dirty_reasons' => $calculationStatus === Quotation::CALCULATION_DIRTY
+                ? array_values(array_unique($data['calculation_dirty_reasons'] ?? []))
+                : [],
+            'pending_calculation_items' => $pendingItems,
+            'calculated_at' => $calculationStatus === Quotation::CALCULATION_CURRENT
+                ? $this->normalizeDateTime($data['calculated_at'] ?? now())
+                : null,
+
             /*
             |--------------------------------------------------------------------------
             | Estado
@@ -81,6 +99,11 @@ class CreateQuotationHeaderAction
 
             'active'  => $data['active'] ?? true,
         ]);
+    }
+
+    protected function normalizeDateTime(mixed $value): string
+    {
+        return Carbon::parse($value)->format('Y-m-d H:i:s');
     }
 
     /**

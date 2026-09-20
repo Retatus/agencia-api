@@ -79,6 +79,8 @@ class GenerateQuotationPassengersAction
                     }
                 }
 
+                $quotation->markCalculationDirty('PASSENGER_COUNT_CHANGED');
+
                 return $created;
             }
         );

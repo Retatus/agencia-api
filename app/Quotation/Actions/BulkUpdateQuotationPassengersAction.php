@@ -17,6 +17,7 @@ class BulkUpdateQuotationPassengersAction
                 $passengers
             ) {
                 $updated = [];
+                $pricingChanged = false;
 
                 foreach (
                     $passengers
@@ -40,12 +41,25 @@ class BulkUpdateQuotationPassengersAction
                             ])
                             ->toArray();
 
+                    if (
+                        (array_key_exists('passenger_type_id', $values)
+                            && (int) $passenger->passenger_type_id !== (int) $values['passenger_type_id'])
+                        || (array_key_exists('active', $values)
+                            && (bool) $passenger->active !== (bool) $values['active'])
+                    ) {
+                        $pricingChanged = true;
+                    }
+
                     $passenger->update(
                         $values
                     );
 
                     $updated[] =
                         $passenger->fresh();
+                }
+
+                if ($pricingChanged) {
+                    $quotation->markCalculationDirty('PASSENGER_PRICING_DATA_CHANGED');
                 }
 
                 return $updated;

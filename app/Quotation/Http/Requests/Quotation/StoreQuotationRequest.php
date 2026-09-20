@@ -31,6 +31,13 @@ class StoreQuotationRequest extends FormRequest
 
             'notes' => ['nullable','string'],
 
+            'calculation_status' => ['sometimes','in:CURRENT,DIRTY'],
+            'calculation_dirty_reasons' => ['sometimes','array'],
+            'calculation_dirty_reasons.*' => ['string','max:100'],
+            'pending_calculation_items' => ['sometimes','array'],
+            'pending_calculation_items.*' => ['string','max:100'],
+            'calculated_at' => ['nullable','date'],
+
             /*
             |--------------------------------------------------------------------------
             | Pasajeros
@@ -62,6 +69,9 @@ class StoreQuotationRequest extends FormRequest
 
             'passengers.*.phone'
                 => ['nullable','string','max:50'],
+
+            'passengers.*.active'
+                => ['sometimes','boolean'],
 
             /*
             |--------------------------------------------------------------------------
@@ -177,6 +187,9 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items.*.active'
                 => ['required','boolean'],
+
+            'itineraries.*.items.*.calculated_at'
+                => ['nullable','date'],
         ];
     }
 

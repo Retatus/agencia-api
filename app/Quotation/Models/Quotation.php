@@ -14,6 +14,10 @@ use App\Traits\HasHistory;
 
 class Quotation extends Model
 {
+    public const CALCULATION_CURRENT = 'CURRENT';
+
+    public const CALCULATION_DIRTY = 'DIRTY';
+
     use HasUuids;
     use HasFactory;
     use SoftDeletes;
@@ -35,6 +39,10 @@ class Quotation extends Model
         'discount',
         'tax',
         'total',
+        'calculation_status',
+        'calculation_dirty_reasons',
+        'pending_calculation_items',
+        'calculated_at',
         'active',
     ];
 
@@ -46,6 +54,9 @@ class Quotation extends Model
         'discount'      => 'decimal:2',
         'tax'           => 'decimal:2',
         'total'         => 'decimal:2',
+        'calculation_dirty_reasons' => 'array',
+        'pending_calculation_items' => 'array',
+        'calculated_at' => 'datetime:Y-m-d H:i:s',
         'active'        => 'boolean',
     ];
 
@@ -91,5 +102,37 @@ class Quotation extends Model
     public function itineraries()
     {
         return $this->hasMany(QuotationItinerary::class);
+    }
+
+    public function markCalculationDirty(string $reason): void
+    {
+        $keys = $this->itineraries()
+            ->with(['items' => fn ($query) => $query
+                ->where('item_type', 'CATALOG')
+                ->where('active', true)])
+            ->get()
+            ->flatMap(fn ($itinerary) => $itinerary->items)
+            ->map(fn ($item) => $item->group_uuid ?: $item->uuid)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($keys)) {
+            return;
+        }
+
+        $this->update([
+            'calculation_status' => self::CALCULATION_DIRTY,
+            'calculation_dirty_reasons' => array_values(array_unique([
+                ...($this->calculation_dirty_reasons ?? []),
+                $reason,
+            ])),
+            'pending_calculation_items' => array_values(array_unique([
+                ...($this->pending_calculation_items ?? []),
+                ...$keys,
+            ])),
+            'calculated_at' => null,
+        ]);
     }
 }

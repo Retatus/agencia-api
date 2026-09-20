@@ -3,6 +3,7 @@
 namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
+use Illuminate\Support\Carbon;
 
 class UpdateQuotationHeaderAction
 {
@@ -39,6 +40,10 @@ class UpdateQuotationHeaderAction
             'notes',
             'discount',
             'tax',
+            'calculation_status',
+            'calculation_dirty_reasons',
+            'pending_calculation_items',
+            'calculated_at',
             'active',
         ];
 
@@ -56,6 +61,29 @@ class UpdateQuotationHeaderAction
         $quotationData = collect($data)
             ->only($fields)
             ->toArray();
+
+        if (array_key_exists('pending_calculation_items', $quotationData)) {
+            $pendingItems = array_values(array_unique(
+                $quotationData['pending_calculation_items'] ?? []
+            ));
+
+            $quotationData['pending_calculation_items'] = $pendingItems;
+            $quotationData['calculation_status'] = empty($pendingItems)
+                ? Quotation::CALCULATION_CURRENT
+                : Quotation::CALCULATION_DIRTY;
+
+            if (empty($pendingItems)) {
+                $quotationData['calculation_dirty_reasons'] = [];
+                $quotationData['calculated_at'] = $this->normalizeDateTime(
+                    $data['calculated_at'] ?? now()
+                );
+            } else {
+                $quotationData['calculation_dirty_reasons'] = array_values(array_unique(
+                    $data['calculation_dirty_reasons'] ?? []
+                ));
+                $quotationData['calculated_at'] = null;
+            }
+        }
 
 
         /*
@@ -97,5 +125,10 @@ class UpdateQuotationHeaderAction
         */
 
         return $quotation;
+    }
+
+    protected function normalizeDateTime(mixed $value): string
+    {
+        return Carbon::parse($value)->format('Y-m-d H:i:s');
     }
 }

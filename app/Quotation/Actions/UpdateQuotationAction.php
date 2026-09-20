@@ -13,6 +13,7 @@ class UpdateQuotationAction
         protected UpdateQuotationItinerariesAction $itineraryAction,
         protected UpdateQuotationPassengersAction $passengerAction,
         protected CalculateQuotationTotalsAction $totalsAction,
+        protected ResolveQuotationCalculationStateAction $calculationStateAction,
     ) {}
 
     /**
@@ -48,6 +49,8 @@ class UpdateQuotationAction
     public function execute( Quotation $quotation, array $data): Quotation
     {
         return DB::transaction(function () use ($quotation, $data) {
+
+            $data = $this->calculationStateAction->execute($quotation, $data);
 
             /*
             |--------------------------------------------------------------------------
