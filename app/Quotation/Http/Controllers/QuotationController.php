@@ -14,6 +14,8 @@ use App\Quotation\Http\Requests\Quotation\UpdateQuotationRequest;
 
 use App\Quotation\Actions\CreateQuotationAction;
 use App\Quotation\Actions\UpdateQuotationAction;
+use App\Quotation\Http\Requests\Quotation\ChangeQuotationStatusRequest;
+use App\Quotation\Services\QuotationWorkflowService;
 
 use Illuminate\Http\JsonResponse;
 
@@ -76,11 +78,40 @@ class QuotationController extends BaseCrudController
 
     public function update(UpdateQuotationRequest $request, Quotation $quotation): JsonResponse
     {
-        $quotation = $this->updateQuotationAction
-            ->execute($quotation, $request->validated());
+        try {
+            $quotation = $this->updateQuotationAction
+                ->execute($quotation, $request->validated());
+        } catch (DomainException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'message' => 'Cotización actualizada correctamente.',
+            'data' => new QuotationResource($quotation),
+        ]);
+    }
+
+    public function changeStatus(
+        ChangeQuotationStatusRequest $request,
+        Quotation $quotation,
+        QuotationWorkflowService $workflow,
+    ): JsonResponse {
+        try {
+            $quotation = $workflow->transition(
+                $quotation,
+                $request->string('status_code')->toString(),
+                $request->validated('reason'),
+            );
+        } catch (DomainException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Estado de la cotización actualizado correctamente.',
             'data' => new QuotationResource($quotation),
         ]);
     }
@@ -104,6 +135,25 @@ class QuotationController extends BaseCrudController
         return response()->json([
             'success' => true,
             'data' => $result,
+        ]);
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        $quotation = $this->findModel($id);
+
+        try {
+            app(QuotationWorkflowService::class)->assertEditable($quotation);
+        } catch (DomainException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
+
+        $quotation->delete();
+
+        return response()->json([
+            'message' => 'Cotización eliminada correctamente.',
         ]);
     }
 }

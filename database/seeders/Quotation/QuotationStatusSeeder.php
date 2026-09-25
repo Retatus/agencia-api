@@ -15,39 +15,31 @@ class QuotationStatusSeeder extends Seeder
         $statuses = [
             [
                 'code' => 'DRAFT',
-                'name' => 'Draft',
+                'name' => 'Borrador',
                 'description' => 'La cotización se está editando y aún no está lista.',
                 'active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'code' => 'PENDING',
-                'name' => 'Pending',
-                'description' => 'La cotización está en espera de aprobación.',
+                'code' => 'READY',
+                'name' => 'Lista',
+                'description' => 'La cotización fue validada y puede enviarse.',
                 'active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'code' => 'SENT',
-                'name' => 'Sent',
+                'name' => 'Enviada',
                 'description' => 'La cotización ha sido enviada.',
                 'active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'code' => 'APPROVED',
-                'name' => 'Approved',
-                'description' => 'La cotización ha sido aprobada.',
-                'active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
                 'code' => 'REJECTED',
-                'name' => 'Rejected',
+                'name' => 'Rechazada',
                 'description' => 'La cotización ha sido rechazada.',
                 'active' => true,
                 'created_at' => now(),
@@ -55,7 +47,7 @@ class QuotationStatusSeeder extends Seeder
             ],
             [
                 'code' => 'EXPIRED',
-                'name' => 'Expired',
+                'name' => 'Vencida',
                 'description' => 'La cotización ha expirado.',
                 'active' => true,
                 'created_at' => now(),
@@ -63,7 +55,7 @@ class QuotationStatusSeeder extends Seeder
             ],
             [
                 'code' => 'CONFIRMED',
-                'name' => 'Confirmed',
+                'name' => 'Confirmada',
                 'description' => 'La cotización ha sido confirmada.',
                 'active' => true,
                 'created_at' => now(),
@@ -71,7 +63,7 @@ class QuotationStatusSeeder extends Seeder
             ],
             [
                 'code' => 'CANCELLED',
-                'name' => 'Cancelled',
+                'name' => 'Cancelada',
                 'description' => 'La cotización ha sido cancelada.',
                 'active' => true,
                 'created_at' => now(),
@@ -85,5 +77,12 @@ class QuotationStatusSeeder extends Seeder
                 $status
             );
         }
+
+        DB::table('quotation_statuses')
+            ->whereIn('code', ['PENDING', 'APPROVED'])
+            ->update([
+                'active' => false,
+                'updated_at' => now(),
+            ]);
     }
 }

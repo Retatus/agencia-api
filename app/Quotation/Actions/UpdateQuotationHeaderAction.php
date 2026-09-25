@@ -37,6 +37,7 @@ class UpdateQuotationHeaderAction
             'exchange_rate',
             'travel_date',
             'valid_until',
+            'commercial_valid_until',
             'notes',
             'discount',
             'tax',

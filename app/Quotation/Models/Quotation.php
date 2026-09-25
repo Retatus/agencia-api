@@ -34,6 +34,7 @@ class Quotation extends Model
         'exchange_rate',
         'travel_date',
         'valid_until',
+        'commercial_valid_until',
         'notes',
         'subtotal',
         'discount',
@@ -43,12 +44,19 @@ class Quotation extends Model
         'calculation_dirty_reasons',
         'pending_calculation_items',
         'calculated_at',
+        'status_changed_at',
+        'sent_at',
+        'confirmed_at',
+        'rejected_at',
+        'cancelled_at',
+        'status_reason',
         'active',
     ];
 
     protected $casts = [
         'travel_date'   => 'date:Y-m-d',
         'valid_until'   => 'date:Y-m-d',
+        'commercial_valid_until' => 'date:Y-m-d',
         'exchange_rate' => 'decimal:6',
         'subtotal'      => 'decimal:2',
         'discount'      => 'decimal:2',
@@ -56,7 +64,12 @@ class Quotation extends Model
         'total'         => 'decimal:2',
         'calculation_dirty_reasons' => 'array',
         'pending_calculation_items' => 'array',
-        'calculated_at' => 'datetime:Y-m-d H:i:s',
+        'calculated_at' => 'datetime',
+        'status_changed_at' => 'datetime',
+        'sent_at' => 'datetime',
+        'confirmed_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'active'        => 'boolean',
     ];
 

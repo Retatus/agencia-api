@@ -49,6 +49,7 @@ class CreateQuotationHeaderAction
 
             'travel_date' => $data['travel_date'],
             'valid_until' => $data['valid_until'],
+            'commercial_valid_until' => $data['commercial_valid_until'] ?? null,
 
             /*
             |--------------------------------------------------------------------------

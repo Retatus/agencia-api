@@ -8,6 +8,8 @@ use App\Quotation\Models\QuotationItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Quotation\Services\QuotationWorkflowService;
+use DomainException;
 
 class QuotationItemController extends Controller
 {
@@ -46,14 +48,24 @@ class QuotationItemController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(QuotationItem $quotitationItem): JsonResponse 
-    { //dd($quotitationItem->toArray());
-        $quotitationItem->delete();
+    public function destroy(
+        QuotationItem $quotationItem,
+        QuotationWorkflowService $workflow,
+    ): JsonResponse {
+        try {
+            $workflow->assertEditable(
+                $quotationItem->itinerary()->with('quotation.status')->firstOrFail()->quotation
+            );
+        } catch (DomainException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
+        $quotationItem->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Service eliminado correctamente.',
-            'object' => $quotitationItem->toArray()
+            'object' => $quotationItem->toArray()
         ]);
     }
 }

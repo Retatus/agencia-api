@@ -73,6 +73,7 @@ Route::group([], function () {
     Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
     Route::get('quotations/statuses', [QuotationStatusController::class, 'index']);
     Route::prefix('quotations/{quotation:uuid}')->group(function () {
+        Route::patch('status', [QuotationController::class, 'changeStatus']);
         Route::post('passengers/generate', [QuotationPassengerController::class, 'generate']);
         Route::patch('passengers/bulk', [QuotationPassengerController::class, 'bulkUpdate']);
         Route::get('passengers', [QuotationPassengerController::class, 'index']);

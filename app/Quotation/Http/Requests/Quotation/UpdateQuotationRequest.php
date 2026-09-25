@@ -29,6 +29,8 @@ class UpdateQuotationRequest extends FormRequest
 
             'valid_until' => ['required','date'],
 
+            'commercial_valid_until' => ['nullable','date','before_or_equal:travel_date'],
+
             'notes' => ['nullable','string'],
 
             'calculation_status' => ['sometimes','in:CURRENT,DIRTY'],

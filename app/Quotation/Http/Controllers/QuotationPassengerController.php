@@ -9,6 +9,8 @@ use App\Quotation\Http\Requests\QuotationPassenger\BulkUpdateQuotationPassengers
 use App\Quotation\Http\Requests\QuotationPassenger\GenerateQuotationPassengersRequest;
 use App\Quotation\Http\Resources\QuotationPassengerResource;
 use App\Quotation\Models\Quotation;
+use App\Quotation\Services\QuotationWorkflowService;
+use DomainException;
 
 class QuotationPassengerController extends Controller
 {
@@ -31,6 +33,12 @@ class QuotationPassengerController extends Controller
         Quotation $quotation,
         GenerateQuotationPassengersAction $action
     ) {
+        try {
+            app(QuotationWorkflowService::class)->assertEditable($quotation);
+        } catch (DomainException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
         $passengers =
             $action->execute(
                 $quotation,
@@ -47,6 +55,12 @@ class QuotationPassengerController extends Controller
         Quotation $quotation,
         BulkUpdateQuotationPassengersAction $action
     ) {
+        try {
+            app(QuotationWorkflowService::class)->assertEditable($quotation);
+        } catch (DomainException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
+
         $passengers =
             $action->execute(
                 $quotation,
