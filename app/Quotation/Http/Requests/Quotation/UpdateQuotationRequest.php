@@ -23,15 +23,26 @@ class UpdateQuotationRequest extends FormRequest
 
             'customer_id' => ['required','exists:customers,id'],
 
-            'currency_id' => ['required','exists:currencies,id'],
+            'tourist_destination_id' => ['nullable','exists:tourist_destinations,id'],
 
-            'price_list_id' => ['required','exists:price_lists,id'],
+            'tourist_destination_name' => ['nullable','string','max:150'],
+
+            'currency_id' => ['required','exists:currencies,id'],
 
             'travel_date' => ['required','date'],
 
             'valid_until' => ['required','date'],
 
+            'commercial_valid_until' => ['nullable','date','before_or_equal:travel_date'],
+
             'notes' => ['nullable','string'],
+
+            'calculation_status' => ['sometimes','in:CURRENT,DIRTY'],
+            'calculation_dirty_reasons' => ['sometimes','array'],
+            'calculation_dirty_reasons.*' => ['string','max:100'],
+            'pending_calculation_items' => ['sometimes','array'],
+            'pending_calculation_items.*' => ['string','max:100'],
+            'calculated_at' => ['nullable','date'],
 
             /*
             |--------------------------------------------------------------------------
@@ -76,6 +87,9 @@ class UpdateQuotationRequest extends FormRequest
 
             'passengers.*.notes' 
                 => ['nullable','string','max:255'],
+
+            'passengers.*.active'
+                => ['sometimes','boolean'],
 
             /*
             |--------------------------------------------------------------------------
@@ -198,8 +212,20 @@ class UpdateQuotationRequest extends FormRequest
                 => ['required','numeric','min:0',
             ],
 
+            'itineraries.*.items.*.base_cost'
+                => ['sometimes','numeric','min:0'],
+
+            'itineraries.*.items.*.base_price'
+                => ['sometimes','numeric','min:0'],
+
             'itineraries.*.items.*.price_id' 
                 => ['nullable','exists:prices,id'],
+
+            'itineraries.*.items.*.price_list_id'
+                => ['nullable','exists:price_lists,id'],
+
+            'itineraries.*.items.*.price_list_item_id'
+                => ['nullable','exists:price_list_items,id'],
 
             'itineraries.*.items.*.unit_price' 
                 => ['required','numeric','min:0'],
@@ -212,6 +238,12 @@ class UpdateQuotationRequest extends FormRequest
             'itineraries.*.items.*.subtotal' 
                 => ['sometimes','numeric','min:0'],
 
+            'itineraries.*.items.*.subtotal_cost'
+                => ['sometimes','numeric','min:0'],
+
+            'itineraries.*.items.*.subtotal_sale'
+                => ['sometimes','numeric','min:0'],
+
             'itineraries.*.items.*.sort_order' 
                 => ['required','numeric','min:1'],
 
@@ -220,6 +252,9 @@ class UpdateQuotationRequest extends FormRequest
 
             'itineraries.*.items.*.active' 
                 => ['required','boolean'],
+
+            'itineraries.*.items.*.calculated_at'
+                => ['nullable','date'],
         ];
     }
 
@@ -244,12 +279,6 @@ class UpdateQuotationRequest extends FormRequest
 
             'currency_id.exists'
                 => 'La moneda no existe.',
-
-            'price_list_id.required'
-                => 'La lista de precios es obligatoria.',
-
-            'price_list_id.exists'
-                => 'La lista de precios no existe.',
 
             'travel_date.required'
                 => 'La fecha de viaje es obligatoria.',

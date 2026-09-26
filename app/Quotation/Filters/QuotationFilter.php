@@ -58,16 +58,6 @@ class QuotationFilter extends BaseFilter
     }
 
     /**
-     * Lista de precios.
-     *
-     * ?price_list_id=1
-     */
-    public function price_list_id($value): void
-    {
-        $this->query->where('price_list_id', $value);
-    }
-
-    /**
      * Moneda.
      *
      * ?currency_id=1

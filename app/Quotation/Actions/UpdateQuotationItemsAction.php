@@ -3,6 +3,7 @@
 namespace App\Quotation\Actions;
 
 use App\Quotation\Models\QuotationItinerary;
+use Illuminate\Support\Carbon;
 
 class UpdateQuotationItemsAction
 {
@@ -84,6 +85,12 @@ class UpdateQuotationItemsAction
         */
 
         foreach ($items as $itemData) {
+
+            if (!empty($itemData['calculated_at'])) {
+                $itemData['calculated_at'] = Carbon::parse(
+                    $itemData['calculated_at']
+                )->format('Y-m-d H:i:s');
+            }
 
             /*
             |--------------------------------------------------------------------------

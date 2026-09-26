@@ -9,13 +9,12 @@ class PricesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Obtener la lista de precios
-        $priceList = DB::table('price_lists')
-            ->where('code', 'GENERAL2026')
-            ->first();
+        $currencyId = DB::table('currencies')
+            ->where('code', 'USD')
+            ->value('id');
 
-        if (!$priceList) {
-            throw new \Exception("Price list GENERAL2026 no existe.");
+        if (!$currencyId) {
+            throw new \Exception('Currency USD no existe.');
         }
 
         // Variantes de servicio (DBL, TPL, VAN, ADULT, CHILD, STUDENT)
@@ -146,16 +145,19 @@ class PricesSeeder extends Seeder
             // Insertar o actualizar
             DB::table('prices')->updateOrInsert(
                 [
-                    'price_list_id' => $priceList->id,
                     'service_variant_id' => $variantId,
                     'price_type_id' => $priceTypes[$row['price']] ?? null,
                     'passenger_type_id' => $passengerId ?? null,
+                    'currency_id' => $currencyId,
                     'min_quantity' => $row['min'] ?? null,
                     'max_quantity' => $row['max'] ?? null,
                 ],
                 [
+                    'valid_from' => null,
+                    'valid_to' => null,
                     'cost' => $row['cost'],
                     'sale_price' => $row['sale'],
+                    'priority' => 1,
                     'active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),

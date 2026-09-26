@@ -8,13 +8,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\CRM\Customer;
-use App\Pricing\PriceList\Models\PriceList;
 use App\Models\Currency;
+use App\Tourism\Destination\Models\TouristDestination;
 
 use App\Traits\HasHistory;
 
 class Quotation extends Model
 {
+    public const CALCULATION_CURRENT = 'CURRENT';
+
+    public const CALCULATION_DIRTY = 'DIRTY';
+
     use HasUuids;
     use HasFactory;
     use SoftDeletes;
@@ -26,28 +30,49 @@ class Quotation extends Model
         'uuid',
         'code',
         'customer_id',
-        'price_list_id',
+        'tourist_destination_id',
+        'tourist_destination_name',
         'currency_id',
         'quotation_status_id',
         'exchange_rate',
         'travel_date',
         'valid_until',
+        'commercial_valid_until',
         'notes',
         'subtotal',
         'discount',
         'tax',
         'total',
+        'calculation_status',
+        'calculation_dirty_reasons',
+        'pending_calculation_items',
+        'calculated_at',
+        'status_changed_at',
+        'sent_at',
+        'confirmed_at',
+        'rejected_at',
+        'cancelled_at',
+        'status_reason',
         'active',
     ];
 
     protected $casts = [
         'travel_date'   => 'date:Y-m-d',
         'valid_until'   => 'date:Y-m-d',
+        'commercial_valid_until' => 'date:Y-m-d',
         'exchange_rate' => 'decimal:6',
         'subtotal'      => 'decimal:2',
         'discount'      => 'decimal:2',
         'tax'           => 'decimal:2',
         'total'         => 'decimal:2',
+        'calculation_dirty_reasons' => 'array',
+        'pending_calculation_items' => 'array',
+        'calculated_at' => 'datetime',
+        'status_changed_at' => 'datetime',
+        'sent_at' => 'datetime',
+        'confirmed_at' => 'datetime',
+        'rejected_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'active'        => 'boolean',
     ];
 
@@ -80,9 +105,9 @@ class Quotation extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function priceList()
+    public function touristDestination()
     {
-        return $this->belongsTo(PriceList::class);
+        return $this->belongsTo(TouristDestination::class);
     }
 
     public function status()
@@ -98,5 +123,37 @@ class Quotation extends Model
     public function itineraries()
     {
         return $this->hasMany(QuotationItinerary::class);
+    }
+
+    public function markCalculationDirty(string $reason): void
+    {
+        $keys = $this->itineraries()
+            ->with(['items' => fn ($query) => $query
+                ->where('item_type', 'CATALOG')
+                ->where('active', true)])
+            ->get()
+            ->flatMap(fn ($itinerary) => $itinerary->items)
+            ->map(fn ($item) => $item->group_uuid ?: $item->uuid)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($keys)) {
+            return;
+        }
+
+        $this->update([
+            'calculation_status' => self::CALCULATION_DIRTY,
+            'calculation_dirty_reasons' => array_values(array_unique([
+                ...($this->calculation_dirty_reasons ?? []),
+                $reason,
+            ])),
+            'pending_calculation_items' => array_values(array_unique([
+                ...($this->pending_calculation_items ?? []),
+                ...$keys,
+            ])),
+            'calculated_at' => null,
+        ]);
     }
 }

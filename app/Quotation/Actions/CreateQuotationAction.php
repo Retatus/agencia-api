@@ -124,7 +124,6 @@ class CreateQuotationAction
                     ->load([
                         'customer',
                         'currency',
-                        'priceList',
                         'status',
 
                         'itineraries',
@@ -132,6 +131,7 @@ class CreateQuotationAction
 
                         'passengers',
                         'passengers.passengerType',
+                        'passengers.country',
                     ]);
 
             } finally {

@@ -23,10 +23,6 @@ return new class extends Migration
                 ->constrained('customers')
                 ->restrictOnDelete();
 
-            $table->foreignId('price_list_id')
-                ->constrained('price_lists')
-                ->restrictOnDelete();
-
             $table->foreignId('currency_id')
                 ->constrained('currencies')
                 ->restrictOnDelete();

@@ -28,6 +28,8 @@ class UpdatePriceListRequest extends FormRequest
             'currency_id' => 'sometimes|exists:currencies,id',
             'valid_from' => 'sometimes|date',
             'valid_to' => 'sometimes|date|after:valid_from',
+            'priority' => 'sometimes|integer|min:1',
+            'is_default' => 'sometimes|boolean',
             'active' => 'boolean',
         ];
     }

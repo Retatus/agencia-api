@@ -4,11 +4,11 @@ namespace App\Pricing\PriceList\Models;
 
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\Currency;
-use App\Pricing\Price\Models\Price;
+use App\Pricing\PriceListItem\Models\PriceListItem;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PriceList extends Model
 {
@@ -25,6 +25,8 @@ class PriceList extends Model
         'currency_id',
         'valid_from',
         'valid_to',
+        'priority',
+        'is_default',
         'active',
     ];
 
@@ -32,6 +34,8 @@ class PriceList extends Model
         'active' => 'boolean',
         'valid_from' => 'date',
         'valid_to' => 'date',
+        'priority' => 'integer',
+        'is_default' => 'boolean',
     ];
 
     protected $hidden = [
@@ -64,9 +68,9 @@ class PriceList extends Model
         return $this->belongsTo(Currency::class);
     }
 
-    public function prices(): HasMany
+    public function items(): HasMany
     {
-        return $this->hasMany(Price::class);
+        return $this->hasMany(PriceListItem::class);
     }
 
     /*

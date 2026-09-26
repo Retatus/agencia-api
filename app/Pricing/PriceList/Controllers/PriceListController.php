@@ -25,6 +25,7 @@ class PriceListController extends Controller
         $items = $filter
             ->apply(
                 PriceList::query()->with($this->relations)
+                    ->withCount('items')
             )
             ->paginate(
                 $request->integer('per_page', 20)
@@ -50,7 +51,7 @@ class PriceListController extends Controller
         PriceList $priceList
     ): PriceListResource {
 
-        $priceList->load($this->relations);
+        $priceList->load($this->relations)->loadCount('items');
 
         return new PriceListResource($priceList);
     }
@@ -73,16 +74,6 @@ class PriceListController extends Controller
         PriceList $priceList
     )
     {
-        if ($priceList->prices()->exists()) {
-
-            return response()->json([
-
-                'message' => 'No puede eliminarse porque tiene precios asociados.'
-
-            ], Response::HTTP_CONFLICT);
-
-        }
-
         $priceList->delete();
 
         return response()->json([

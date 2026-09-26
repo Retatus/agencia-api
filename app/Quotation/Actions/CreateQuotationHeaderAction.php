@@ -4,6 +4,7 @@ namespace App\Quotation\Actions;
 
 use App\Quotation\Models\Quotation;
 use App\Quotation\Models\QuotationStatus;
+use Illuminate\Support\Carbon;
 
 class CreateQuotationHeaderAction
 {
@@ -12,6 +13,14 @@ class CreateQuotationHeaderAction
      */
     public function execute(array $data): Quotation
     {
+        $pendingItems = array_values(array_unique(
+            $data['pending_calculation_items'] ?? []
+        ));
+
+        $calculationStatus = empty($pendingItems)
+            ? Quotation::CALCULATION_CURRENT
+            : Quotation::CALCULATION_DIRTY;
+
         return Quotation::create([
 
             /*
@@ -29,8 +38,9 @@ class CreateQuotationHeaderAction
             */
 
             'customer_id'          => $data['customer_id'],
+            'tourist_destination_id' => $data['tourist_destination_id'] ?? null,
+            'tourist_destination_name' => $data['tourist_destination_name'] ?? null,
             'currency_id'          => $data['currency_id'],
-            'price_list_id'        => $data['price_list_id'],
             'quotation_status_id'  => $data['quotation_status_id'] ?? $this->draftStatus(),
 
             /*
@@ -41,6 +51,7 @@ class CreateQuotationHeaderAction
 
             'travel_date' => $data['travel_date'],
             'valid_until' => $data['valid_until'],
+            'commercial_valid_until' => $data['commercial_valid_until'] ?? null,
 
             /*
             |--------------------------------------------------------------------------
@@ -74,6 +85,15 @@ class CreateQuotationHeaderAction
             'tax'       => 0,
             'total'     => 0,
 
+            'calculation_status' => $calculationStatus,
+            'calculation_dirty_reasons' => $calculationStatus === Quotation::CALCULATION_DIRTY
+                ? array_values(array_unique($data['calculation_dirty_reasons'] ?? []))
+                : [],
+            'pending_calculation_items' => $pendingItems,
+            'calculated_at' => $calculationStatus === Quotation::CALCULATION_CURRENT
+                ? $this->normalizeDateTime($data['calculated_at'] ?? now())
+                : null,
+
             /*
             |--------------------------------------------------------------------------
             | Estado
@@ -82,6 +102,11 @@ class CreateQuotationHeaderAction
 
             'active'  => $data['active'] ?? true,
         ]);
+    }
+
+    protected function normalizeDateTime(mixed $value): string
+    {
+        return Carbon::parse($value)->format('Y-m-d H:i:s');
     }
 
     /**

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code', 10)->unique();
             $table->string('name', 50);
+            $table->string('quantity_basis', 20)->default('UNITS');
             $table->boolean('active')->default(true);
             $table->timestamps();
         });

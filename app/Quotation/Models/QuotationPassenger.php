@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\PassengerType;
+use App\Models\Country;
 
 use App\Traits\HasHistory;
 
@@ -31,6 +32,8 @@ class QuotationPassenger extends Model
         'nationality',
         'email',
         'phone',
+        'sort_order',
+        'active',
     ];
 
     protected $casts = [
@@ -69,6 +72,15 @@ class QuotationPassenger extends Model
     public function passengerType()
     {
         return $this->belongsTo(PassengerType::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(
+            Country::class,
+            'nationality', // campo local en customers
+            'iso'          // campo en countries
+        );
     }
 
     /*

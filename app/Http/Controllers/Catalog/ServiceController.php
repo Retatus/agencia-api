@@ -12,30 +12,45 @@ use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $request->validate([
             'search'   => 'nullable|string|max:100',
             'active'   => 'nullable|boolean',
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
-        
+
         $query = Service::query()->with([
             'variants',
             'provider' => function ($q) {
-                $q->select('id', 'uuid', 'code', 'business_name');
+                $q->select(
+                    'id',
+                    'uuid',
+                    'code',
+                    'business_name',
+                    'commercial_name'
+                );
             },
             'serviceCategory',
         ]);
-        
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('code', 'like', "%{$request->search}%")
-                ->orWhere('name', 'like', "%{$request->search}%");
+
+        $search = trim((string) $request->input('search', ''));
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%")
+                    ->orWhereHas('provider', function ($providerQuery) use ($search) {
+                        $providerQuery->where(function ($provider) use ($search) {
+                            $provider
+                                ->where('business_name', 'like', "%{$search}%")
+                                ->orWhere('commercial_name', 'like', "%{$search}%");
+                        });
+                    });
             });
         }
 
-        if ($request->has('active')) {
+        if ($request->filled('active')) {
             $query->where('active', $request->boolean('active'));
         }
 
@@ -122,7 +137,6 @@ class ServiceController extends Controller
     public function prices( Request $request, Service $service, int $variant_id) 
     {
         $request->validate([
-            'price_list_id' => 'nullable|integer',
             'passenger_type_id' => 'nullable|integer',
         ]);
 
@@ -132,15 +146,12 @@ class ServiceController extends Controller
             ->firstOrFail();
 
         $prices = $variant->prices()
+            ->with([
+                'priceType:id,code,name,quantity_basis',
+                'currency:id,code,name,symbol',
+                'passengerType:id,code,name',
+            ])
             ->where('active', true)
-            ->when(
-                $request->filled('price_list_id'),
-                fn ($query) =>
-                    $query->where(
-                        'price_list_id',
-                        $request->integer('price_list_id')
-                    )
-            )
             ->when(
                 $request->filled('passenger_type_id'),
                 fn ($query) =>

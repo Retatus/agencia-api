@@ -14,6 +14,7 @@ use App\Http\Controllers\Catalog\ProviderController;
 use App\Pricing\Price\Controllers\PriceController;
 use App\Pricing\PriceList\Controllers\PriceListController;
 use App\Pricing\PriceType\Controllers\PriceTypeController;
+use App\Pricing\PriceListItem\Controllers\PriceListItemController;
 
 use App\Http\Controllers\CRM\CustomerController;
 
@@ -26,7 +27,8 @@ use App\Quotation\Http\Controllers\QuotationPassengerController;
 
 use App\Audit\Http\Controllers\HistoryController;
 
-
+use App\Http\Controllers\Shared\CountryController;
+use App\Tourism\Destination\Controllers\TouristDestinationController;
 
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
@@ -58,6 +60,7 @@ Route::group([], function () {
 
     Route::prefix('pricing')->group(function () {
         Route::apiResource('price-lists', PriceListController::class);
+        Route::apiResource('price-list-items', PriceListItemController::class);
         Route::patch('prices/bulk', [PriceController::class, 'bulkUpdate']);
         Route::apiResource('prices', PriceController::class);
         Route::apiResource('price-types', PriceTypeController::class);
@@ -68,30 +71,21 @@ Route::group([], function () {
         Route::apiResource('customers', CustomerController::class);
     });
 
-    // Route::get('crm/customers', [CustomerController::class, 'index'])->name('customers.index');
-    // Route::get('crm/customers/{customer:uuid}', [CustomerController::class, 'show'])->name('customers.show');
-    // Route::post('crm/customers', [CustomerController::class, 'store'])->name('customers.store');
-    // Route::put('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::patch('crm/customers/{customer:uuid}', [CustomerController::class, 'update'])->name('customer.update');
-    // Route::delete('crm/customers/{customer:uuid}', [CustomerController::class, 'destroy'])->name('customers.destroy');
     Route::post('quotations/calculate',[QuotationController::class, 'calculate']);
     Route::get('quotations/statuses', [QuotationStatusController::class, 'index']);
     Route::prefix('quotations/{quotation:uuid}')->group(function () {
+        Route::patch('status', [QuotationController::class, 'changeStatus']);
         Route::post('passengers/generate', [QuotationPassengerController::class, 'generate']);
         Route::patch('passengers/bulk', [QuotationPassengerController::class, 'bulkUpdate']);
         Route::get('passengers', [QuotationPassengerController::class, 'index']);
     });
     Route::prefix('quotations')->group(function () {
-        Route::apiResource('/', QuotationController::class)->parameters(['' => 'quotation']);
+        Route::apiResource('quotations', QuotationController::class)->parameters(['quotations' => 'quotation']);
     });
     
     Route::prefix('quotations-itineraries')->group(function () {
-        Route::apiResource('/', QuotationItineraryController::class)->parameters(['' => 'quotitationItinerary']);
+        Route::apiResource('quotations-itineraries', QuotationItineraryController::class)->parameters(['quotations-itineraries' => 'quotationItinerary']);
     });
-    // Route::get('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'items'])->name('quotations-itineraries.items');
-    // Route::post('quotations-itineraries/{quotitationItinerary}/items', [QuotationItineraryController::class, 'itemsStore'])->name('quotations-itineraries.items.store');
-    // Route::put('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsUpdate'])->name('quotations-itineraries.items.update');
-    // Route::delete('quotations-itineraries/{quotitationItinerary}/items/{item}', [QuotationItineraryController::class, 'itemsDestroy'])->name('quotations-itineraries.items.destroy');
     
     Route::delete('/quotation-items/{quotationItem}', [QuotationItemController::class, 'destroy']);
 
@@ -99,6 +93,10 @@ Route::group([], function () {
         Route::get('history/{uuid}/view',[HistoryController::class, 'index']);
     });
 
-    
-       
+    Route::apiResource('countries', CountryController::class);
+
+    Route::apiResource(
+        'tourist-destinations',
+        TouristDestinationController::class
+    )->parameters(['tourist-destinations' => 'touristDestination']);
 });

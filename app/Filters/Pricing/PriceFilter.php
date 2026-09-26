@@ -18,13 +18,13 @@ class PriceFilter extends BaseFilter
         |--------------------------------------------------------------------------
         */
 
-        $this->priceList();
-
         $this->serviceVariant();
 
         $this->priceType();
 
         $this->passengerType();
+
+        $this->currency();
 
         $this->active();
 
@@ -60,6 +60,8 @@ class PriceFilter extends BaseFilter
 
         $this->quantityRange();
 
+        $this->validity();
+
         /*
         |--------------------------------------------------------------------------
         | Sorting
@@ -69,30 +71,6 @@ class PriceFilter extends BaseFilter
         $this->sorting();
 
         return $this->query;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRICE LIST
-    |--------------------------------------------------------------------------
-    */
-
-    protected function priceList(): void
-    {
-        if (
-            ! $this->request->filled(
-                'price_list_id'
-            )
-        ) {
-            return;
-        }
-
-        $this->query->where(
-            'price_list_id',
-            $this->request->integer(
-                'price_list_id'
-            )
-        );
     }
 
     /*
@@ -165,6 +143,35 @@ class PriceFilter extends BaseFilter
                 'passenger_type_id'
             )
         );
+    }
+
+    protected function currency(): void
+    {
+        if (! $this->request->filled('currency_id')) {
+            return;
+        }
+
+        $this->query->where(
+            'currency_id',
+            $this->request->integer('currency_id')
+        );
+    }
+
+    protected function validity(): void
+    {
+        if (! $this->request->filled('date')) {
+            return;
+        }
+
+        $date = $this->request->date('date')->toDateString();
+
+        $this->query
+            ->where(fn (Builder $query) => $query
+                ->whereNull('valid_from')
+                ->orWhereDate('valid_from', '<=', $date))
+            ->where(fn (Builder $query) => $query
+                ->whereNull('valid_to')
+                ->orWhereDate('valid_to', '>=', $date));
     }
 
     /*
@@ -312,94 +319,91 @@ class PriceFilter extends BaseFilter
 
     protected function search(): void
     {
-        if (
-            ! $this->request->filled(
-                'search'
+        $search = trim(
+            (string) $this->request->input(
+                'search',
+                ''
             )
-        ) {
+        );
+
+        if ($search === '') {
             return;
         }
 
-        $search =
-            trim(
-                $this->request->input(
-                    'search'
-                )
-            );
+        $escaped = addcslashes(
+            $search,
+            '%_\\'
+        );
+
+        $like = "%{$escaped}%";
 
         $this->query->where(
-            function (
-                Builder $query
-            ) use ($search) {
-
-                /*
-                |--------------------------------------------------------------------------
-                | Variant
-                |--------------------------------------------------------------------------
-                */
-
-                $query->whereHas(
-                    'serviceVariant',
-                    function (
-                        Builder $variant
-                    ) use ($search) {
-                        $variant
-                            ->where(
-                                'name',
-                                'like',
-                                "%{$search}%"
-                            )
-                            ->orWhere(
-                                'code',
-                                'like',
-                                "%{$search}%"
-                            );
-                    }
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Service
-                |--------------------------------------------------------------------------
-                */
-
-                $query->orWhereHas(
-                    'serviceVariant.service',
-                    function (
-                        Builder $service
-                    ) use ($search) {
-                        $service
-                            ->where(
-                                'name',
-                                'like',
-                                "%{$search}%"
-                            )
-                            ->orWhere(
-                                'code',
-                                'like',
-                                "%{$search}%"
-                            );
-                    }
-                );
-
-                /*
-                |--------------------------------------------------------------------------
-                | Provider
-                |--------------------------------------------------------------------------
-                */
-
-                $query->orWhereHas(
-                    'serviceVariant.service.provider',
-                    function (
-                        Builder $provider
-                    ) use ($search) {
-                        $provider->where(
-                            'business_name',
-                            'like',
-                            "%{$search}%"
-                        );
-                    }
-                );
+            function (Builder $query) use ($like) {
+                $query
+                    ->whereHas(
+                        'serviceVariant',
+                        function (
+                            Builder $variant
+                        ) use ($like) {
+                            $variant
+                                ->where(
+                                    'name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    )
+                    ->orWhereHas(
+                        'serviceVariant.service',
+                        function (
+                            Builder $service
+                        ) use ($like) {
+                            $service
+                                ->where(
+                                    'name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'description',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    )
+                    ->orWhereHas(
+                        'serviceVariant.service.provider',
+                        function (
+                            Builder $provider
+                        ) use ($like) {
+                            $provider
+                                ->where(
+                                    'business_name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'commercial_name',
+                                    'like',
+                                    $like
+                                )
+                                ->orWhere(
+                                    'code',
+                                    'like',
+                                    $like
+                                );
+                        }
+                    );
             }
         );
     }

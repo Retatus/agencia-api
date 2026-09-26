@@ -21,6 +21,20 @@ class QuotationCalculationEngine
 
             foreach ($itinerary['items'] ?? [] as $item) {
 
+                $item['currency_id'] ??=
+                    $request->currencyId();
+
+                $item['service_date'] ??=
+                    $itinerary['travel_date']
+                    ?? $request->toArray()['travel_date']
+                    ?? null;
+
+                $item['passengers'] ??=
+                    $request->passengers();
+
+                $item['commercial_policy_id'] ??=
+                    $request->commercialPolicyId();
+
                 $calculator = $this->calculatorFactory->make(
                     $item
                 );

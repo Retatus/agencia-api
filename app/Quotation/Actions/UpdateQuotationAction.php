@@ -5,6 +5,7 @@ namespace App\Quotation\Actions;
 use App\Quotation\Models\Quotation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Quotation\Services\QuotationWorkflowService;
 
 class UpdateQuotationAction
 {
@@ -13,6 +14,8 @@ class UpdateQuotationAction
         protected UpdateQuotationItinerariesAction $itineraryAction,
         protected UpdateQuotationPassengersAction $passengerAction,
         protected CalculateQuotationTotalsAction $totalsAction,
+        protected ResolveQuotationCalculationStateAction $calculationStateAction,
+        protected QuotationWorkflowService $workflow,
     ) {}
 
     /**
@@ -47,7 +50,11 @@ class UpdateQuotationAction
      */
     public function execute( Quotation $quotation, array $data): Quotation
     {
+        $this->workflow->assertEditable($quotation);
+
         return DB::transaction(function () use ($quotation, $data) {
+
+            $data = $this->calculationStateAction->execute($quotation, $data);
 
             /*
             |--------------------------------------------------------------------------
@@ -157,7 +164,6 @@ class UpdateQuotationAction
                     ->load([
                         'customer',
                         'currency',
-                        'priceList',
                         'status',
 
                         'itineraries',
@@ -165,6 +171,7 @@ class UpdateQuotationAction
 
                         'passengers',
                         'passengers.passengerType',
+                        'passengers.country',
                     ]);
 
             } finally {

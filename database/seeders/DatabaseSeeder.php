@@ -22,6 +22,12 @@ use Database\Seeders\Quotation\QuotationSeeder;
 use Database\Seeders\Quotation\QuotationPassengerSeeder;
 use Database\Seeders\Quotation\QuotationItinerarySeeder;
 use Database\Seeders\Quotation\QuotationItemSeeder;
+use Database\Seeders\Tourism\TouristDestinationSeeder;
+
+use Database\Seeders\Demo\FrontendPricingScenarioSeeder;
+use Database\Seeders\Demo\InkaRoutesTestSeeder;
+use Database\Seeders\Demo\AndesTestTravelSeeder;
+use Database\Seeders\Demo\CommercialPricingDemoSeeder;
 
 
 class DatabaseSeeder extends Seeder
@@ -45,6 +51,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             ServiceVariantSeeder::class,
             CurrenciesSeeder::class,
+            TouristDestinationSeeder::class,
             PriceListSeeder::class,
             PassengerTypesSeeder::class,
             PriceTypeSeeder::class,
@@ -55,6 +62,12 @@ class DatabaseSeeder extends Seeder
             QuotationPassengerSeeder::class,
             QuotationItinerarySeeder::class,
             QuotationItemSeeder::class,
+
+            FrontendPricingScenarioSeeder::class,
+            InkaRoutesTestSeeder::class,
+            AndesTestTravelSeeder::class,
+            CommercialPricingDemoSeeder::class,
+            CountrySeeder::class,
         ]);
     }
 }

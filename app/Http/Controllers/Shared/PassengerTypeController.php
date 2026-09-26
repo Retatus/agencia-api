@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PassengerType\StorePassengerTypeRequest;
-use App\Http\Requests\PassengerType\UpdatePassengerTypeRequest;
+use App\Http\Requests\Shared\PassengerType\StorePassengerTypeRequest;
+use App\Http\Requests\Shared\PassengerType\UpdatePassengerTypeRequest;
 use App\Http\Resources\Shared\PassengerTypeResource;
 use App\Models\PassengerType;
 use Illuminate\Http\JsonResponse;

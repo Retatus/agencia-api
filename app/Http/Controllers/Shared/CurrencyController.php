@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Shared;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Currency\StoreCurrencyRequest;
-use App\Http\Requests\Currency\UpdateCurrencyRequest;
+use App\Http\Requests\Shared\Currency\StoreCurrencyRequest;
+use App\Http\Requests\Shared\Currency\UpdateCurrencyRequest;
 use App\Http\Resources\Shared\CurrencyResource;
 use App\Models\Currency;
 use Illuminate\Http\JsonResponse;

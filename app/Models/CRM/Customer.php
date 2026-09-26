@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Models\Country;
+
 class Customer extends Model
 {
     use HasUuids;
@@ -80,4 +82,13 @@ class Customer extends Model
     {
         return trim("{$this->first_name} {$this->last_name}");
     }
-}
+
+    public function country()
+    {
+        return $this->belongsTo(
+            Country::class,
+            'nationality', // campo local en customers
+            'iso'          // campo en countries
+        );
+    }
+ }

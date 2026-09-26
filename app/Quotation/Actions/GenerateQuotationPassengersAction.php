@@ -74,10 +74,14 @@ class GenerateQuotationPassengersAction
                                         $sortOrder,
                                 ]);
 
-                        $created[] =
-                            $passenger;
+                        $created[] = $passenger->load([
+                            'passengerType',
+                            'country',
+                        ]);
                     }
                 }
+
+                $quotation->markCalculationDirty('PASSENGER_COUNT_CHANGED');
 
                 return $created;
             }

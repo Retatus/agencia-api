@@ -48,12 +48,11 @@ class CalculationRequest
         return $this->quotation['currency_id'] ?? null;
     }
 
-    /**
-     * Obtener lista de precios.
-     */
-    public function priceListId(): ?int
+    public function commercialPolicyId(): ?int
     {
-        return $this->quotation['price_list_id'] ?? null;
+        $value = $this->quotation['commercial_policy_id'] ?? null;
+
+        return $value === null || $value === '' ? null : (int) $value;
     }
 
     /**

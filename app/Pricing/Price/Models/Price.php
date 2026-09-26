@@ -5,10 +5,12 @@ namespace App\Pricing\Price\Models;
 use App\Traits\HasActiveScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-use App\Pricing\PriceList\Models\PriceList;
 use App\Pricing\PriceType\Models\PriceType;
+use App\Models\Currency;
 use App\Models\PassengerType;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 use App\Models\ServiceVariant;
 
 class Price extends Model
@@ -18,20 +20,26 @@ class Price extends Model
     protected $table = 'prices';
 
     protected $fillable = [
-        'price_list_id',
         'service_variant_id',
         'price_type_id',
         'passenger_type_id',
+        'currency_id',
         'min_quantity',
         'max_quantity',
+        'valid_from',
+        'valid_to',
         'cost',
         'sale_price',
+        'priority',
         'active',
     ];
 
     protected $casts = [
         'cost' => 'decimal:2',
         'sale_price' => 'decimal:2',
+        'valid_from' => 'date:Y-m-d',
+        'valid_to' => 'date:Y-m-d',
+        'priority' => 'integer',
         'active' => 'boolean',
     ];
 
@@ -45,11 +53,6 @@ class Price extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
-
-    public function priceList(): BelongsTo
-    {
-        return $this->belongsTo(PriceList::class);
-    }
 
     public function serviceVariant(): BelongsTo
     {
@@ -66,16 +69,21 @@ class Price extends Model
         return $this->belongsTo(PassengerType::class);
     }
 
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
+    }
+
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Query Scopes
     |--------------------------------------------------------------------------
     */
-
-    public function scopeByPriceList($query, int $priceListId)
-    {
-        return $query->where('price_list_id', $priceListId);
-    }
 
     public function scopeByVariant($query, int $variantId)
     {
@@ -121,11 +129,6 @@ class Price extends Model
     public function getProviderNameAttribute(): ?string
     {
         return $this->serviceVariant?->service?->provider?->name;
-    }
-
-    public function getPriceListNameAttribute(): ?string
-    {
-        return $this->priceList?->name;
     }
 
     public function getPassengerTypeNameAttribute(): ?string
