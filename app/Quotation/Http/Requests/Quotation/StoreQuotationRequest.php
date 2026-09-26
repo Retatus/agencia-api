@@ -23,6 +23,10 @@ class StoreQuotationRequest extends FormRequest
 
             'customer_id' => ['required','exists:customers,id'],
 
+            'tourist_destination_id' => ['nullable','exists:tourist_destinations,id'],
+
+            'tourist_destination_name' => ['nullable','string','max:150'],
+
             'currency_id' => ['required','exists:currencies,id'],
 
             'travel_date' => ['required','date'],

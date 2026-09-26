@@ -19,7 +19,10 @@ class QuotationPassengerController extends Controller
     ) {
         $passengers = $quotation
                 ->passengers()
-                ->with('passengerType')
+                ->with([
+                    'passengerType',
+                    'country',
+                ])
                 ->orderBy('id')
                 ->get();
 

@@ -22,6 +22,7 @@ use Database\Seeders\Quotation\QuotationSeeder;
 use Database\Seeders\Quotation\QuotationPassengerSeeder;
 use Database\Seeders\Quotation\QuotationItinerarySeeder;
 use Database\Seeders\Quotation\QuotationItemSeeder;
+use Database\Seeders\Tourism\TouristDestinationSeeder;
 
 use Database\Seeders\Demo\FrontendPricingScenarioSeeder;
 use Database\Seeders\Demo\InkaRoutesTestSeeder;
@@ -50,6 +51,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             ServiceVariantSeeder::class,
             CurrenciesSeeder::class,
+            TouristDestinationSeeder::class,
             PriceListSeeder::class,
             PassengerTypesSeeder::class,
             PriceTypeSeeder::class,

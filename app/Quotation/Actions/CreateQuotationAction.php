@@ -131,6 +131,7 @@ class CreateQuotationAction
 
                         'passengers',
                         'passengers.passengerType',
+                        'passengers.country',
                     ]);
 
             } finally {

@@ -38,6 +38,8 @@ class CreateQuotationHeaderAction
             */
 
             'customer_id'          => $data['customer_id'],
+            'tourist_destination_id' => $data['tourist_destination_id'] ?? null,
+            'tourist_destination_name' => $data['tourist_destination_name'] ?? null,
             'currency_id'          => $data['currency_id'],
             'quotation_status_id'  => $data['quotation_status_id'] ?? $this->draftStatus(),
 

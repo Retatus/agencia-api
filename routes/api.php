@@ -28,6 +28,7 @@ use App\Quotation\Http\Controllers\QuotationPassengerController;
 use App\Audit\Http\Controllers\HistoryController;
 
 use App\Http\Controllers\Shared\CountryController;
+use App\Tourism\Destination\Controllers\TouristDestinationController;
 
 Route::group([], function () {
     Route::apiResource('paises', PaisController::class);
@@ -93,4 +94,9 @@ Route::group([], function () {
     });
 
     Route::apiResource('countries', CountryController::class);
+
+    Route::apiResource(
+        'tourist-destinations',
+        TouristDestinationController::class
+    )->parameters(['tourist-destinations' => 'touristDestination']);
 });

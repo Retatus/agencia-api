@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\CRM\Customer;
 use App\Models\Currency;
+use App\Tourism\Destination\Models\TouristDestination;
 
 use App\Traits\HasHistory;
 
@@ -29,6 +30,8 @@ class Quotation extends Model
         'uuid',
         'code',
         'customer_id',
+        'tourist_destination_id',
+        'tourist_destination_name',
         'currency_id',
         'quotation_status_id',
         'exchange_rate',
@@ -100,6 +103,11 @@ class Quotation extends Model
     public function currency()
     {
         return $this->belongsTo(Currency::class);
+    }
+
+    public function touristDestination()
+    {
+        return $this->belongsTo(TouristDestination::class);
     }
 
     public function status()

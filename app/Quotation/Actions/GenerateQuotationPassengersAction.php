@@ -74,8 +74,10 @@ class GenerateQuotationPassengersAction
                                         $sortOrder,
                                 ]);
 
-                        $created[] =
-                            $passenger;
+                        $created[] = $passenger->load([
+                            'passengerType',
+                            'country',
+                        ]);
                     }
                 }
 

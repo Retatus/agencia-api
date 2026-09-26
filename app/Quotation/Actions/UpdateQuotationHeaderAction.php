@@ -32,6 +32,8 @@ class UpdateQuotationHeaderAction
 
         $fields = [
             'customer_id',
+            'tourist_destination_id',
+            'tourist_destination_name',
             'currency_id',
             'quotation_status_id',
             'exchange_rate',
