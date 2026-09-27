@@ -5,13 +5,62 @@ namespace App\Tourism\Destination\Controllers;
 use App\Http\Controllers\Controller;
 use App\Tourism\Destination\Models\TouristDestination;
 use App\Tourism\Destination\Requests\SaveTouristDestinationRequest;
+use App\Tourism\Destination\Requests\ConvertTouristDestinationRequest;
 use App\Tourism\Destination\Resources\TouristDestinationResource;
+use App\Pricing\ExchangeRate\Services\CurrencyConverter;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TouristDestinationController extends Controller
 {
+    public function convert(
+        ConvertTouristDestinationRequest $request,
+        TouristDestination $touristDestination,
+        CurrencyConverter $converter,
+    ): JsonResponse {
+        $destination = $this->loadTemplate($touristDestination);
+        $targetCurrencyId = $request->integer('target_currency_id');
+        $date = $request->filled('exchange_rate_date')
+            ? CarbonImmutable::parse($request->string('exchange_rate_date')->toString())
+            : CarbonImmutable::today();
+        $data = (new TouristDestinationResource($destination))->resolve($request);
+        $exchangeRate = $converter->convert(
+            '0',
+            (int) $destination->currency_id,
+            $targetCurrencyId,
+            $date,
+        )['exchange_rate'];
+
+        $data['target_currency_id'] = $targetCurrencyId;
+        $data['days'] = collect($data['days'])->map(function (array $day) use (
+            $converter,
+            $destination,
+            $exchangeRate,
+        ): array {
+            $day['items'] = collect($day['items'])->map(function (array $item) use (
+                $converter,
+                $destination,
+                $exchangeRate,
+            ): array {
+                return array_merge($item, [
+                    'source_currency_id' => (int) $destination->currency_id,
+                    'source_unit_cost' => $item['estimated_cost'],
+                    'source_unit_price' => $item['estimated_price'],
+                    'estimated_cost' => $converter->apply($item['estimated_cost'], $exchangeRate),
+                    'estimated_price' => $converter->apply($item['estimated_price'], $exchangeRate),
+                    'exchange_rate' => $exchangeRate->rate,
+                    'exchange_rate_date' => $exchangeRate->effectiveDate->toDateString(),
+                ]);
+            })->values()->all();
+
+            return $day;
+        })->values()->all();
+
+        return response()->json(['data' => $data]);
+    }
+
     public function index(Request $request)
     {
         $request->validate([

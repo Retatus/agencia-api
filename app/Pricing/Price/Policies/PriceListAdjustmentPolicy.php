@@ -30,7 +30,7 @@ final readonly class PriceListAdjustmentPolicy implements PriceAdjustmentPolicy
         $priceList = PriceList::query()
             ->whereKey($context->commercialPolicyId)
             ->where('active', true)
-            ->where('currency_id', $context->currencyId)
+            ->where('currency_id', $price->currency_id)
             ->whereDate('valid_from', '<=', $date)
             ->whereDate('valid_to', '>=', $date)
             ->first();
@@ -73,6 +73,11 @@ final readonly class PriceListAdjustmentPolicy implements PriceAdjustmentPolicy
             adjustmentType: $item->adjustment_type->value,
             costAdjustment: $item->cost_adjustment,
             saleAdjustment: $item->sale_adjustment,
+            sourceCurrencyId: (int) $price->currency_id,
+            sourceBaseCost: $price->cost,
+            sourceBaseSalePrice: $price->sale_price,
+            sourceFinalCost: $finalCost,
+            sourceFinalSalePrice: $finalSalePrice,
         );
     }
 }

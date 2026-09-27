@@ -11,7 +11,7 @@ class StoreServiceVariantRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -23,14 +23,13 @@ class StoreServiceVariantRequest extends FormRequest
     {
         return [
             'service_id' => 'required|exists:services,id',
-            'code' => 'required|unique:service_variants,code ',
-            'name' => 'required|string|max:255',
-            'min_capacity' => 'required|numeric|min:0',
-            'max_capacity' => 'required|numeric|min:0',
-            'optimal_capacity' => 'required|numeric|min:0',
-            'price' => 'required|numeric|min:0',    
-            'unit_type' => 'required|string|max:255',
-            'duration' => 'required|numeric|min:0',
+            'code' => 'required|string|max:10|unique:service_variants,code',
+            'name' => 'required|string|max:150',
+            'min_capacity' => 'required|integer|min:1',
+            'max_capacity' => 'required|integer|gte:min_capacity',
+            'optimal_capacity' => 'required|integer|gte:min_capacity|lte:max_capacity',
+            'unit_type' => 'required|in:PERSON,ROOM,VEHICLE,GROUP,UNIT',
+            'duration' => 'nullable|integer|min:1',
             'active' => 'required|boolean',
         ];
     }
@@ -54,9 +53,6 @@ class StoreServiceVariantRequest extends FormRequest
             'optimal_capacity.required' => 'La capacidad óptima es obligatoria.',
             'optimal_capacity.numeric' => 'La capacidad óptima debe ser un número.',
             'optimal_capacity.min' => 'La capacidad óptima no puede ser negativa.',
-            'price.required' => 'El precio es obligatorio.',
-            'price.numeric' => 'El precio debe ser un número.',
-            'price.min' => 'El precio no puede ser negativo.',    
             'unit_type.required' => 'El tipo de unidad es obligatorio.',
             'unit_type.string' => 'El tipo de unidad debe ser una cadena de texto.',
             'unit_type.max' => 'El tipo de unidad no debe exceder los 255 caracteres.',

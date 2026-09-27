@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\ServiceVariant;
 use App\Pricing\Price\Models\Price;
+use App\Models\Currency;
 
 use App\Traits\HasHistory;
 
@@ -40,6 +41,11 @@ class QuotationItem extends Model
         'price_id',
         'price_list_id',
         'price_list_item_id',
+        'source_currency_id',
+        'source_unit_cost',
+        'source_unit_price',
+        'exchange_rate',
+        'exchange_rate_date',
         'base_cost',
         'base_price',
         'unit_cost',
@@ -65,6 +71,11 @@ class QuotationItem extends Model
         'base_cost' => 'decimal:2',
 
         'base_price' => 'decimal:2',
+
+        'source_unit_cost' => 'decimal:2',
+        'source_unit_price' => 'decimal:2',
+        'exchange_rate' => 'decimal:8',
+        'exchange_rate_date' => 'date',
 
         'subtotal' => 'decimal:2',
 
@@ -115,6 +126,11 @@ class QuotationItem extends Model
     public function price()
     {
         return $this->belongsTo(Price::class);
+    }
+
+    public function sourceCurrency()
+    {
+        return $this->belongsTo(Currency::class, 'source_currency_id');
     }
 
     public function priceList()

@@ -74,6 +74,11 @@ final readonly class AccommodationRecommendationPricer
                     'adjustment_type' => $resolved->adjustmentType,
                     'cost_adjustment' => $resolved->costAdjustment,
                     'sale_adjustment' => $resolved->saleAdjustment,
+                    'source_currency_id' => $resolved->sourceCurrencyId,
+                    'source_unit_cost' => (float) $resolved->sourceFinalCost,
+                    'source_unit_price' => (float) $resolved->sourceFinalSalePrice,
+                    'exchange_rate' => $resolved->exchangeRate,
+                    'exchange_rate_date' => $resolved->exchangeRateDate?->toDateString(),
                 ]);
 
                 $totalCost += $subtotalCost;

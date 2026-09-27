@@ -22,6 +22,8 @@ class CreateQuotationItemsAction
             $unitPrice = (float) ($itemData['unit_price'] ?? 0);
             $baseCost = (float) ($itemData['base_cost'] ?? $unitCost);
             $basePrice = (float) ($itemData['base_price'] ?? $unitPrice);
+            $sourceUnitCost = (float) ($itemData['source_unit_cost'] ?? $unitCost);
+            $sourceUnitPrice = (float) ($itemData['source_unit_price'] ?? $unitPrice);
             $calculationType = $itemData['calculation_type'] ?? 'generic';
             $duration =  max( 1, (int) ($itemData['duration'] ?? 1 ));
 
@@ -44,6 +46,12 @@ class CreateQuotationItemsAction
                 'price_id'           => $itemData['price_id'] ?? null,
                 'price_list_id'      => $itemData['price_list_id'] ?? null,
                 'price_list_item_id' => $itemData['price_list_item_id'] ?? null,
+                'source_currency_id' => $itemData['source_currency_id']
+                    ?? $itinerary->quotation()->value('currency_id'),
+                'source_unit_cost'   => $sourceUnitCost,
+                'source_unit_price'  => $sourceUnitPrice,
+                'exchange_rate'      => $itemData['exchange_rate'] ?? 1,
+                'exchange_rate_date' => $itemData['exchange_rate_date'] ?? null,
 
                 'item_type'          => $itemData['item_type'] ?? 'CUSTOM',
                 'calculation_type'   => $calculationType,

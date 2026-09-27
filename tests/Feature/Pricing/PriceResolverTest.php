@@ -7,6 +7,7 @@ use App\Pricing\Price\Exceptions\AmbiguousPriceException;
 use App\Pricing\Price\Exceptions\PriceNotFoundException;
 use App\Pricing\Price\Models\Price;
 use App\Pricing\Price\Services\PricingService;
+use App\Pricing\ExchangeRate\Models\ExchangeRate;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -103,9 +104,9 @@ class PriceResolverTest extends TestCase
 
         $this->pricingService()->resolve(
             new PriceContext(
-                serviceVariantId: $this->variantId('DBL'),
+                serviceVariantId: 999999,
                 priceTypeId: $this->priceTypeId('ROOM'),
-                currencyId: 999999,
+                currencyId: $this->currencyId('USD'),
                 serviceDate: CarbonImmutable::parse('2026-07-15'),
                 quantity: 1,
             )
@@ -139,6 +140,35 @@ class PriceResolverTest extends TestCase
         $this->pricingService()->resolve(
             $this->context('DBL', 'ROOM', quantity: 1)
         );
+    }
+
+    public function test_it_converts_a_source_price_to_the_quotation_currency(): void
+    {
+        ExchangeRate::create([
+            'from_currency_id' => $this->currencyId('USD'),
+            'to_currency_id' => $this->currencyId('PEN'),
+            'rate' => '3.75000000',
+            'effective_date' => '2026-06-01',
+            'source' => 'TEST',
+            'active' => true,
+        ]);
+
+        $resolved = $this->pricingService()->resolve(
+            new PriceContext(
+                serviceVariantId: $this->variantId('DBL'),
+                priceTypeId: $this->priceTypeId('ROOM'),
+                currencyId: $this->currencyId('PEN'),
+                serviceDate: CarbonImmutable::parse('2026-06-15'),
+                quantity: 1,
+                exchangeRateDate: CarbonImmutable::parse('2026-06-15'),
+            )
+        );
+
+        $this->assertSame($this->currencyId('USD'), $resolved->sourceCurrencyId);
+        $this->assertSame($this->currencyId('PEN'), $resolved->currencyId);
+        $this->assertSame('120.00', $resolved->sourceFinalSalePrice);
+        $this->assertSame('450.00', $resolved->finalSalePrice);
+        $this->assertSame('3.75000000', $resolved->exchangeRate);
     }
 
     private function pricingService(): PricingService

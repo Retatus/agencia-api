@@ -15,6 +15,7 @@ final readonly class PriceContext
         public int $quantity,
         public ?int $passengerTypeId = null,
         public ?int $commercialPolicyId = null,
+        public ?CarbonImmutable $exchangeRateDate = null,
     ) {
         if ($this->quantity < 1) {
             throw new InvalidArgumentException(
@@ -37,6 +38,14 @@ final readonly class PriceContext
             commercialPolicyId: isset($data['commercial_policy_id'])
                 ? (int) $data['commercial_policy_id']
                 : null,
+            exchangeRateDate: isset($data['exchange_rate_date'])
+                ? CarbonImmutable::parse($data['exchange_rate_date'])
+                : null,
         );
+    }
+
+    public function conversionDate(): CarbonImmutable
+    {
+        return $this->exchangeRateDate ?? CarbonImmutable::today();
     }
 }

@@ -227,6 +227,21 @@ class UpdateQuotationRequest extends FormRequest
             'itineraries.*.items.*.price_list_item_id'
                 => ['nullable','exists:price_list_items,id'],
 
+            'itineraries.*.items.*.source_currency_id'
+                => ['nullable','exists:currencies,id'],
+
+            'itineraries.*.items.*.source_unit_cost'
+                => ['nullable','numeric','min:0'],
+
+            'itineraries.*.items.*.source_unit_price'
+                => ['nullable','numeric','min:0'],
+
+            'itineraries.*.items.*.exchange_rate'
+                => ['nullable','numeric','gt:0'],
+
+            'itineraries.*.items.*.exchange_rate_date'
+                => ['nullable','date'],
+
             'itineraries.*.items.*.unit_price' 
                 => ['required','numeric','min:0'],
 

@@ -69,6 +69,11 @@ class GenericCalculator implements CalculatorInterface
             'subtotal' => $quantity * $unitPrice,
             'subtotal_cost' => $quantity * $unitCost,
             'subtotal_sale' => $quantity * $unitPrice,
+            'source_currency_id' => $pricing['source_currency_id'],
+            'source_unit_cost' => $pricing['source_unit_cost'],
+            'source_unit_price' => $pricing['source_unit_price'],
+            'exchange_rate' => $pricing['exchange_rate'],
+            'exchange_rate_date' => $pricing['exchange_rate_date'],
         ]);
 
         return new CalculationResult(
