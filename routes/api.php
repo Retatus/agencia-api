@@ -15,6 +15,7 @@ use App\Pricing\Price\Controllers\PriceController;
 use App\Pricing\PriceList\Controllers\PriceListController;
 use App\Pricing\PriceType\Controllers\PriceTypeController;
 use App\Pricing\PriceListItem\Controllers\PriceListItemController;
+use App\Pricing\ExchangeRate\Controllers\ExchangeRateController;
 
 use App\Http\Controllers\CRM\CustomerController;
 
@@ -64,6 +65,7 @@ Route::group([], function () {
         Route::patch('prices/bulk', [PriceController::class, 'bulkUpdate']);
         Route::apiResource('prices', PriceController::class);
         Route::apiResource('price-types', PriceTypeController::class);
+        Route::apiResource('exchange-rates', ExchangeRateController::class);
     });
 
     // no afecta en dada el echo de agregar customer:uuid en las rutas
@@ -95,6 +97,10 @@ Route::group([], function () {
 
     Route::apiResource('countries', CountryController::class);
 
+    Route::post(
+        'tourist-destinations/{touristDestination}/convert',
+        [TouristDestinationController::class, 'convert']
+    );
     Route::apiResource(
         'tourist-destinations',
         TouristDestinationController::class

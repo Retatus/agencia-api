@@ -19,7 +19,6 @@ final class PriceResolver implements PriceResolverInterface
             ->where('active', true)
             ->where('service_variant_id', $context->serviceVariantId)
             ->where('price_type_id', $context->priceTypeId)
-            ->where('currency_id', $context->currencyId)
             ->when(
                 $context->passengerTypeId === null,
                 fn ($query) => $query->whereNull('passenger_type_id'),
@@ -59,6 +58,27 @@ final class PriceResolver implements PriceResolverInterface
                 $context->quantity,
                 $date,
             ));
+        }
+
+        $targetCurrencyCandidates = $candidates
+            ->where('currency_id', $context->currencyId)
+            ->values();
+
+        if ($targetCurrencyCandidates->isNotEmpty()) {
+            $candidates = $targetCurrencyCandidates;
+        } else {
+            $sourceCurrencies = $candidates
+                ->pluck('currency_id')
+                ->unique()
+                ->values();
+
+            if ($sourceCurrencies->count() > 1) {
+                throw new AmbiguousPriceException(sprintf(
+                    'Existen tarifas compatibles en varias monedas de origen (%s) y ninguna en la moneda solicitada %d.',
+                    $sourceCurrencies->implode(', '),
+                    $context->currencyId,
+                ));
+            }
         }
 
         $ordered = $this->orderBySpecificity($candidates);

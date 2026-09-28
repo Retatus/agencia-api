@@ -89,6 +89,11 @@ final readonly class TransportRecommendationPricer
                     'adjustment_type' => $resolved->adjustmentType,
                     'cost_adjustment' => $resolved->costAdjustment,
                     'sale_adjustment' => $resolved->saleAdjustment,
+                    'source_currency_id' => $resolved->sourceCurrencyId,
+                    'source_unit_cost' => (float) $resolved->sourceFinalCost,
+                    'source_unit_price' => (float) $resolved->sourceFinalSalePrice,
+                    'exchange_rate' => $resolved->exchangeRate,
+                    'exchange_rate_date' => $resolved->exchangeRateDate?->toDateString(),
                 ];
             }
         } catch (PriceNotFoundException|AmbiguousPriceException) {
@@ -129,6 +134,26 @@ final readonly class TransportRecommendationPricer
             $recommendation['vehicles'][$index]['base_price'] =
                 count(array_unique(array_column($allocationUnits, 'base_price'))) === 1
                     ? $allocationUnits[0]['base_price']
+                    : null;
+            $recommendation['vehicles'][$index]['source_currency_id'] =
+                count(array_unique(array_column($allocationUnits, 'source_currency_id'))) === 1
+                    ? $allocationUnits[0]['source_currency_id']
+                    : null;
+            $recommendation['vehicles'][$index]['source_unit_cost'] =
+                count(array_unique(array_column($allocationUnits, 'source_unit_cost'))) === 1
+                    ? $allocationUnits[0]['source_unit_cost']
+                    : null;
+            $recommendation['vehicles'][$index]['source_unit_price'] =
+                count(array_unique(array_column($allocationUnits, 'source_unit_price'))) === 1
+                    ? $allocationUnits[0]['source_unit_price']
+                    : null;
+            $recommendation['vehicles'][$index]['exchange_rate'] =
+                count(array_unique(array_column($allocationUnits, 'exchange_rate'))) === 1
+                    ? $allocationUnits[0]['exchange_rate']
+                    : null;
+            $recommendation['vehicles'][$index]['exchange_rate_date'] =
+                count(array_unique(array_column($allocationUnits, 'exchange_rate_date'))) === 1
+                    ? $allocationUnits[0]['exchange_rate_date']
                     : null;
             $recommendation['vehicles'][$index]['subtotal_cost'] =
                 array_sum(array_column($allocationUnits, 'unit_cost'));

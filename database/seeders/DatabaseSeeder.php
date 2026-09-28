@@ -15,6 +15,7 @@ use Database\Seeders\CurrenciesSeeder;
 use Database\Seeders\Pricing\PriceListSeeder;
 use Database\Seeders\Shared\PassengerTypesSeeder;
 use Database\Seeders\Pricing\PriceTypeSeeder;
+use Database\Seeders\Pricing\ExchangeRateSeeder;
 use Database\Seeders\Pricing\PricesSeeder;
 use Database\Seeders\CRM\CustomerSeeder;
 use Database\Seeders\Quotation\QuotationStatusSeeder;
@@ -51,6 +52,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             ServiceVariantSeeder::class,
             CurrenciesSeeder::class,
+            ExchangeRateSeeder::class,
             TouristDestinationSeeder::class,
             PriceListSeeder::class,
             PassengerTypesSeeder::class,
