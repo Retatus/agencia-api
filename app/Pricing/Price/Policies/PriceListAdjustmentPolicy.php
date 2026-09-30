@@ -9,6 +9,7 @@ use App\Pricing\Price\Models\Price;
 use App\Pricing\PriceList\Exceptions\InvalidPriceListException;
 use App\Pricing\PriceList\Models\PriceList;
 use App\Pricing\PriceList\Services\PriceAdjustmentCalculator;
+use App\Pricing\PriceListItem\Models\PriceListItem;
 
 final readonly class PriceListAdjustmentPolicy implements PriceAdjustmentPolicy
 {
@@ -21,34 +22,21 @@ final readonly class PriceListAdjustmentPolicy implements PriceAdjustmentPolicy
         Price $price,
         PriceContext $context
     ): ResolvedPrice {
-        if ($context->commercialPolicyId === null) {
-            return ResolvedPrice::fromPrice($price);
-        }
-
         $date = $context->serviceDate->toDateString();
 
-        $priceList = PriceList::query()
-            ->whereKey($context->commercialPolicyId)
-            ->where('active', true)
-            ->where('currency_id', $price->currency_id)
-            ->whereDate('valid_from', '<=', $date)
-            ->whereDate('valid_to', '>=', $date)
-            ->first();
-
-        if ($priceList === null) {
-            throw new InvalidPriceListException(
-                'La lista de precios seleccionada no está activa, vigente o no corresponde a la moneda solicitada.'
+        $item = $context->commercialPolicyId === null
+            ? $this->automaticItem($price, $date)
+            : $this->selectedItem(
+                $price,
+                $context->commercialPolicyId,
+                $date,
             );
-        }
-
-        $item = $priceList->items()
-            ->where('price_id', $price->getKey())
-            ->where('active', true)
-            ->first();
 
         if ($item === null) {
             return ResolvedPrice::fromPrice($price);
         }
+
+        $priceList = $item->priceList;
 
         $finalCost = $this->calculator->calculate(
             $price->cost,
@@ -79,5 +67,68 @@ final readonly class PriceListAdjustmentPolicy implements PriceAdjustmentPolicy
             sourceFinalCost: $finalCost,
             sourceFinalSalePrice: $finalSalePrice,
         );
+    }
+
+    private function selectedItem(
+        Price $price,
+        int $priceListId,
+        string $date,
+    ): ?PriceListItem {
+        $priceList = PriceList::query()
+            ->whereKey($priceListId)
+            ->where('active', true)
+            ->where('currency_id', $price->currency_id)
+            ->whereDate('valid_from', '<=', $date)
+            ->whereDate('valid_to', '>=', $date)
+            ->first();
+
+        if ($priceList === null) {
+            throw new InvalidPriceListException(
+                'La lista de precios seleccionada no está activa, vigente o no corresponde a la moneda solicitada.'
+            );
+        }
+
+        return $priceList->items()
+            ->with('priceList')
+            ->where('price_id', $price->getKey())
+            ->where('active', true)
+            ->first();
+    }
+
+    private function automaticItem(
+        Price $price,
+        string $date,
+    ): ?PriceListItem {
+        $items = PriceListItem::query()
+            ->with('priceList')
+            ->where('price_id', $price->getKey())
+            ->where('active', true)
+            ->whereHas('priceList', function ($query) use ($price, $date) {
+                $query
+                    ->where('active', true)
+                    ->where('currency_id', $price->currency_id)
+                    ->whereDate('valid_from', '<=', $date)
+                    ->whereDate('valid_to', '>=', $date);
+            })
+            ->get()
+            ->sortByDesc(
+                fn (PriceListItem $item) => $item->priceList->priority
+            )
+            ->values();
+
+        $selected = $items->first();
+        $second = $items->get(1);
+
+        if (
+            $selected !== null
+            && $second !== null
+            && $selected->priceList->priority === $second->priceList->priority
+        ) {
+            throw new InvalidPriceListException(
+                'Existen dos promociones vigentes con la misma prioridad para el precio base.'
+            );
+        }
+
+        return $selected;
     }
 }

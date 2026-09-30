@@ -47,6 +47,62 @@ class PriceListAdjustmentPolicyTest extends TestCase
         $this->assertSame('PERCENTAGE', $resolved->adjustmentType);
     }
 
+    public function test_it_automatically_applies_the_current_highest_priority_promotion(): void
+    {
+        $standard = $this->priceList([
+            'code' => 'STANDARD-PROMO',
+            'priority' => 10,
+        ]);
+        $this->addItem($standard, 'PERCENTAGE', -2, -2);
+
+        $preferred = $this->priceList([
+            'code' => 'PREFERRED-PROMO',
+            'priority' => 20,
+        ]);
+        $item = $this->addItem($preferred, 'PERCENTAGE', -5, -5);
+
+        $resolved = $this->resolve();
+
+        $this->assertSame('90.25', $resolved->finalCost);
+        $this->assertSame('114.00', $resolved->finalSalePrice);
+        $this->assertSame($preferred->getKey(), $resolved->priceListId);
+        $this->assertSame($item->getKey(), $resolved->priceListItemId);
+    }
+
+    public function test_it_does_not_apply_an_automatic_promotion_outside_its_dates(): void
+    {
+        $list = $this->priceList([
+            'valid_from' => '2026-12-14',
+            'valid_to' => '2026-12-31',
+        ]);
+        $this->addItem($list, 'PERCENTAGE', -5, -5);
+
+        $resolved = $this->resolve();
+
+        $this->assertSame('95.00', $resolved->finalCost);
+        $this->assertSame('120.00', $resolved->finalSalePrice);
+        $this->assertNull($resolved->priceListId);
+    }
+
+    public function test_it_automatically_applies_a_december_promotion_on_the_service_date(): void
+    {
+        $list = $this->priceList([
+            'valid_from' => '2026-12-14',
+            'valid_to' => '2026-12-31',
+            'priority' => 30,
+        ]);
+        $this->addItem($list, 'PERCENTAGE', -5, -5);
+
+        $resolved = $this->resolve(
+            commercialPolicyId: null,
+            serviceDate: '2026-12-20',
+        );
+
+        $this->assertSame('90.25', $resolved->finalCost);
+        $this->assertSame('114.00', $resolved->finalSalePrice);
+        $this->assertSame($list->getKey(), $resolved->priceListId);
+    }
+
     public function test_it_applies_a_fixed_adjustment(): void
     {
         $list = $this->priceList();
@@ -91,13 +147,16 @@ class PriceListAdjustmentPolicyTest extends TestCase
         $this->resolve((int) $list->getKey());
     }
 
-    private function resolve(?int $commercialPolicyId = null)
+    private function resolve(
+        ?int $commercialPolicyId = null,
+        string $serviceDate = '2026-06-15',
+    )
     {
         return app(PricingService::class)->resolve(new PriceContext(
             serviceVariantId: $this->variantId('DBL'),
             priceTypeId: $this->priceTypeId('ROOM'),
             currencyId: $this->currencyId('USD'),
-            serviceDate: CarbonImmutable::parse('2026-06-15'),
+            serviceDate: CarbonImmutable::parse($serviceDate),
             quantity: 1,
             commercialPolicyId: $commercialPolicyId,
         ));
