@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\ServiceVariant;
 use App\Pricing\Price\Models\Price;
 use App\Models\Currency;
+use App\Quotation\Enums\PaymentStatus;
 
 use App\Traits\HasHistory;
 
@@ -55,6 +56,8 @@ class QuotationItem extends Model
         'subtotal_sale',
         'sort_order',
         'notes',
+        'payment_due_date',
+        'payment_status',
         'active',
         'calculated_at',
     ];  
@@ -88,6 +91,10 @@ class QuotationItem extends Model
         'sort_order' => 'integer',
 
         'active' => 'boolean',
+
+        'payment_due_date' => 'date:Y-m-d',
+
+        'payment_status' => PaymentStatus::class,
 
         'calculated_at' => 'datetime',
     ];

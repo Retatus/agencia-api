@@ -55,6 +55,9 @@ class StoreQuotationRequest extends FormRequest
             'passengers.*.passenger_type_id'
                 => ['required','exists:passenger_types,id'],
 
+            'passengers.*.document_type_id'
+                => ['nullable','exists:document_types,id'],
+
             'passengers.*.first_name'
                 => ['required','string','max:100'],
 
@@ -205,6 +208,12 @@ class StoreQuotationRequest extends FormRequest
 
             'itineraries.*.items.*.notes'
                 => ['nullable','string','max:255'],
+
+            'itineraries.*.items.*.payment_due_date'
+                => ['nullable','date'],
+
+            'itineraries.*.items.*.payment_status'
+                => ['sometimes','string','in:NOT_REQUIRED,PENDING,PARTIAL,PAID'],
 
             'itineraries.*.items.*.active'
                 => ['required','boolean'],

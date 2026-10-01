@@ -17,7 +17,6 @@ use Database\Seeders\Shared\PassengerTypesSeeder;
 use Database\Seeders\Pricing\PriceTypeSeeder;
 use Database\Seeders\Pricing\ExchangeRateSeeder;
 use Database\Seeders\Pricing\PricesSeeder;
-use Database\Seeders\Demo\CasonaDelSolHotelSeeder;
 use Database\Seeders\CRM\CustomerSeeder;
 use Database\Seeders\Quotation\QuotationStatusSeeder;
 use Database\Seeders\Quotation\QuotationSeeder;
@@ -71,7 +70,6 @@ class DatabaseSeeder extends Seeder
             AndesTestTravelSeeder::class,
             CommercialPricingDemoSeeder::class,
             CountrySeeder::class,
-            CasonaDelSolHotelSeeder::class,
         ]);
     }
 }

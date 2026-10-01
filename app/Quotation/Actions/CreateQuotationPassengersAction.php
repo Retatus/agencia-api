@@ -34,6 +34,8 @@ class CreateQuotationPassengersAction
 
                 'passenger_type_id' => $passengerData['passenger_type_id'],
 
+                'document_type_id' => $passengerData['document_type_id'] ?? null,
+
                 'first_name' => $passengerData['first_name'],
 
                 'last_name' => $passengerData['last_name'],

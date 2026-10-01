@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 use App\Models\PassengerType;
 use App\Models\Country;
+use App\Models\DocumentType;
 
 use App\Traits\HasHistory;
 
@@ -25,6 +26,7 @@ class QuotationPassenger extends Model
         'uuid',
         'quotation_id',
         'passenger_type_id',
+        'document_type_id',
         'first_name',
         'last_name',
         'birth_date',
@@ -72,6 +74,11 @@ class QuotationPassenger extends Model
     public function passengerType()
     {
         return $this->belongsTo(PassengerType::class);
+    }
+
+    public function documentType()
+    {
+        return $this->belongsTo(DocumentType::class);
     }
 
     public function country()

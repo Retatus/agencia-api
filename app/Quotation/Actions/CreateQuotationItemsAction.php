@@ -101,6 +101,9 @@ class CreateQuotationItemsAction
 
                 'notes'              => $itemData['notes'] ?? null,
 
+                'payment_due_date'   => $itemData['payment_due_date'] ?? null,
+                'payment_status'     => $itemData['payment_status'] ?? 'NOT_REQUIRED',
+
                 'active'             => $itemData['active'] ?? true,
                 'calculated_at'      => !empty($itemData['calculated_at'])
                     ? Carbon::parse($itemData['calculated_at'])->format('Y-m-d H:i:s')
