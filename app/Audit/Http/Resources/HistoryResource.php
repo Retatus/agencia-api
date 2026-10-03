@@ -60,9 +60,13 @@ class HistoryResource extends JsonResource
 
             'path' => $this->path,
 
-            'old_value' => $this->old_value,
+            'old_value' => $this->formatHistoryValue(
+                $this->old_value
+            ),
 
-            'new_value' => $this->new_value,
+            'new_value' => $this->formatHistoryValue(
+                $this->new_value
+            ),
 
             /*
             |--------------------------------------------------------------------------
@@ -96,5 +100,39 @@ class HistoryResource extends JsonResource
             'created_at' => $this->created_at?->toDateTimeString(),
 
         ];
+    }
+
+    private function formatHistoryValue(
+        mixed $value
+    ): mixed {
+        if (is_array($value)) {
+            return collect($value)
+                ->map(
+                    fn (mixed $item) =>
+                        $this->formatHistoryValue($item)
+                )
+                ->all();
+        }
+
+        if (
+            is_string($value) &&
+            preg_match(
+                '/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/',
+                $value,
+                $parts
+            )
+        ) {
+            return sprintf(
+                '%s-%s-%s %s:%s:%s',
+                $parts[1],
+                $parts[2],
+                $parts[3],
+                $parts[4],
+                $parts[5],
+                $parts[6]
+            );
+        }
+
+        return $value;
     }
 }

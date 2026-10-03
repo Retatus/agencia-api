@@ -3,9 +3,11 @@
 namespace App\Traits;
 
 use App\Audit\Models\History;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Str;
+use Throwable;
 
 trait HasHistory
 {
@@ -124,7 +126,18 @@ trait HasHistory
                 continue;
             }
 
-            $oldValue = $this->getOriginal($field);
+            /*
+            |--------------------------------------------------------------------------
+            | Valor original crudo
+            |--------------------------------------------------------------------------
+            |
+            | getOriginal() puede aplicar el cast del modelo y devolver Carbon,
+            | mientras que getChanges() contiene el valor crudo que se persistió.
+            | Comparar ambas representaciones produciría falsos positivos.
+            |
+            */
+
+            $oldValue = $this->getRawOriginal($field);
 
             /*
             |--------------------------------------------------------------------------
@@ -236,6 +249,35 @@ trait HasHistory
 
         $castType = $this->getCasts()[$field] ?? null;
 
+        if (
+            $oldValue === null ||
+            $newValue === null
+        ) {
+            return $oldValue === $newValue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fechas y horas
+        |--------------------------------------------------------------------------
+        |
+        | Evita falsos cambios entre representaciones equivalentes:
+        |
+        | 2026-10-04T22:00:00.000000Z
+        | 2026-10-04 22:00:00
+        |
+        */
+
+        if ($this->isHistoryDateCast($castType)) {
+            return $this->normalizeHistoryDate(
+                $oldValue,
+                $castType
+            ) === $this->normalizeHistoryDate(
+                $newValue,
+                $castType
+            );
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Campos decimales
@@ -252,7 +294,7 @@ trait HasHistory
         */
 
         if (
-            $castType &&
+            is_string($castType) &&
             str_starts_with($castType, 'decimal')
         ) {
             return bccomp(
@@ -290,6 +332,13 @@ trait HasHistory
     ): mixed {
         $castType = $this->getCasts()[$field] ?? null;
 
+        if ($this->isHistoryDateCast($castType)) {
+            return $this->normalizeHistoryDate(
+                $value,
+                $castType
+            );
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Decimal
@@ -297,7 +346,7 @@ trait HasHistory
         */
 
         if (
-            $castType &&
+            is_string($castType) &&
             str_starts_with($castType, 'decimal')
         ) {
             return number_format(
@@ -309,6 +358,68 @@ trait HasHistory
         }
 
         return $value;
+    }
+
+    protected function isHistoryDateCast(
+        mixed $castType
+    ): bool {
+        if (!is_string($castType)) {
+            return false;
+        }
+
+        $type = explode(
+            ':',
+            $castType,
+            2
+        )[0];
+
+        return in_array(
+            $type,
+            [
+                'date',
+                'datetime',
+                'immutable_date',
+                'immutable_datetime',
+            ],
+            true
+        );
+    }
+
+    protected function normalizeHistoryDate(
+        mixed $value,
+        string $castType
+    ): ?string {
+        if (
+            $value === null ||
+            $value === ''
+        ) {
+            return null;
+        }
+
+        try {
+            $type = explode(
+                ':',
+                $castType,
+                2
+            )[0];
+
+            $format = in_array(
+                $type,
+                [
+                    'date',
+                    'immutable_date',
+                ],
+                true
+            )
+                ? 'Y-m-d'
+                : 'Y-m-d H:i:s';
+
+            return Carbon::parse($value)->format(
+                $format
+            );
+        } catch (Throwable) {
+            return (string) $value;
+        }
     }
 
     protected function getDecimalScale(
